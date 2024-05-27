@@ -1,7 +1,6 @@
 import base64
 import certifi
 import os
-from dotenv import load_dotenv
 import requests
 import json
 import time
@@ -9,6 +8,7 @@ import pdfkit
 import datetime
 import smtplib
 
+from dotenv import load_dotenv
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
