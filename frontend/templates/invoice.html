@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice</title>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        max-width: 100%;
+        margin: 30px;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        background-color: #f9f9f9;
+    }
+    .container label {
+        font-weight: bold;
+    }
+    img {
+        width: 13%;
+        padding: 10px;
+    }
+    h1 {
+        margin-top: -20px;
+        text-align: center;
+        padding: 10px;
+    }
+    .invoice-seller-buyer {
+        margin-top: 10px;
+    }
+    .invoice-seller, .invoice-buyer {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        width: 90%;
+        padding: 20px;
+    }
+    .invoice-seller {
+        margin-right: 10px; /* Add some space between seller and buyer */
+    }
+    .invoice-details {
+        margin-top: 30px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+    .footer {
+        text-align: center;
+        margin-top: 30px;
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <img src="data:image/jpeg;base64,{{ image_data }}">
+        <h1>Factura/Invoice</h1>
+        <div class="invoice-seller-buyer">
+            <div class="invoice-seller">
+                <h2>Furnizor/Seller</h2>
+                <p>DFG ACTIVE IMOBILIARE SRL</p>
+                <p><label>CUI/Tax ID no: </label>15830118</p>
+                <p><label>Adresa/Adress: </label>MUNICIPIUL BUCUREŞTI, SECTOR 5, STR. ION CREANGĂ, NR.7, CAMERA 3, ET.6, AP.25</p>
+                <p><label>Registrul comertului/Registartion no: </label>J40/13984/2003</p>
+            </div>
+            <div class="invoice-buyer">
+                <h2>Cumparator/Customer</h2>
+                {% if company_details %}
+                    <p id="denumire">{{ company_details.denumire }}</p>
+                    <p id="cui"><label>CUI/Tax ID no: </label>{{ company_details.cui }}</p>
+                    <p id="adresa"><label>Adresa/Adress: </label>{{ company_details.adresa }}</p>
+                    <p id="nrRegCom"><label>Registrul comertului/Registration no: </label>{{ company_details.nrRegCom }}</p>
+                {% endif %}
+                <p id="emailCountry"><label>Email: </label>{{ email }}<br>Romania</p>
+            </div>
+        </div>
+        <div class="invoice-details">
+            <h3>Detalii Factura/Invoice Details</h3>
+            <p><label>Numar factura/Invoice no: </label>#12345</p>
+            <p><label>Data emiterii/Date of issue: </label>{{ current_date }}</p>
+            <p><label>Data livrarii/Date of delivery: </label>{{ current_date }}</p>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Denumire produs<br>Product name</th>
+                    <th>Pret per KWh<br>Price per KWh<br>(RON/KWh)</th>
+                    <th>Cantitate<br>Quantity<br>(KWh)</th>
+                    <th>Pret fara TVA<br>Price without VAT<br>(RON)</th>
+                    <th>TVA<br>VAT<br>(%)</th>
+                    <th>Pret cu TVA<br>Price with VAT<br>(RON)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Energie/Energy</td>
+                    <td>{{ transactionDetails.kwPrice }}</td>
+                    <td>{{ "%.2f"|format(transactionDetails.Amount/100/transactionDetails.kwPrice) }}</td>
+                    <td>{{ "%.2f"|format(transactionDetails.Amount/100/1.19) }}</td>
+                    <td>19</td>
+                    <td>{{ transactionDetails.Amount/100 }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="footer">
+            <p>Email: solarPlannersEmail<br>Telefon/Phone Number: 07xxx<br>Website: solar.planners.ro<br><br>Factura creata de Solar Planners SRL/Invoice created by Solar Planners SRL</p>
+        </div>
+    </div>
+</body>
+</html>

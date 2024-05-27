@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Planners</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <style>
+        @media only screen and (max-width: 768px) {
+            .login-container {
+                width: 75%;
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-container {
+            width: 35%;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .login-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+
+        .login-container button {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px; /* Added margin-top */
+        }
+
+        #myForm {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #details {
+            display: none;
+            margin-top: 20px; /* Added margin-top */
+        }
+
+        #details p {
+            text-align: left;
+            margin: 5px 0; /* Adjusted paragraph margin */
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .buttonsDiv {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .buttonsDiv button {
+            margin: 20px;
+        }
+    </style>
+
+    <div class="login-container">
+        <h2>Introduceti datele</h2>
+        <form id="myForm">
+            {% if transactionId %}
+                <input type="text" value="{{ transactionId }}" placeholder="Id Factura" id="transactionId" required>
+            {% else %}
+                <input type="text" placeholder="Id Factura" id="transactionId" required>
+            {% endif %}
+            <input type="email" placeholder="Email" id="email" required>
+            <input type="number" placeholder="CUI(optional)" id="CUI">
+            <button id="submitButton" type="submit">Trimite</button>
+        </form>
+        
+        <div id="companyDetails" class="overlay">
+            <div class="popup">
+                <div id="details">
+                    <h2>Detalii Companie</h2>
+                    <p id="cui"></p>
+                    <p id="denumire"></p>
+                    <p id="adresa"></p>
+                    <p id="nrRegCom"></p>
+                </div>
+                <div class="buttonsDiv">
+                    <button onclick="closePopup('companyDetails')">Anuleaza</button>
+                    <button onclick="submitPopup('companyDetails')">Continua</button>
+                </div>
+            </div>
+        </div>
+        <div id="notFound" class="overlay">
+            <div class="popup">
+                <div id="not">
+                    <label>CUI-ul nu a fost gasit. Va rugam incercati din nou</label>
+                </div>
+                <div class="buttonsDiv">
+                    <button onclick="closeNotFound()">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('myForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var emailInput = document.getElementById('email').value;
+            var cuiInput = document.getElementById('CUI').value;
+            var transactionId = document.getElementById('transactionId').value;
+            if(cuiInput && cuiInput !== 0) {
+                var submitButton = document.getElementById('submitButton');
+                submitButton.disabled = true;
+                submitButton.style.opacity = '0.5'; // Reduce opacity
+                sendEmailAndCUI(emailInput, cuiInput, transactionId);
+            } else {
+                sendEmail(emailInput, transactionId)
+                window.location.href = "success";
+            }
+        });
+
+        function openPopup(popupId) {
+            document.getElementById(popupId).style.display = "flex";
+        }
+
+        function closePopup(popupId) {
+            var submitButton = document.getElementById('submitButton');
+            submitButton.disabled = false;
+            submitButton.style.opacity = '1'; // Reduce opacity
+            document.getElementById(popupId).style.display = "none";
+        }
+
+        function submitPopup(popupId) {
+            window.location.href = "success";
+            closePopup(popupId);
+        }
+
+        function sendEmailAndCUI(email, cui, transactionId) {
+            // Using fetch to send email and cui to the Python script
+            fetch('/send_email_and_cui', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    transactionId: transactionId,
+                    cui: cui
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Data sent successfully');
+
+                    fetchJSONFile('/get_temp_file/anaf_response.json', email);
+                } else {
+                    console.error('Failed to send data');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function sendEmail(email, transactionId) {
+            // Using fetch to send email and cui to the Python script
+            fetch('/send_email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    transactionId: transactionId
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Data sent successfully');
+                } else {
+                    console.error('Failed to send data');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function fetchJSONFile(fileLocation, email) {
+            $.ajax({
+                url: fileLocation,
+                dataType: 'json',
+                success: function(data) {
+                    // Process the fetched JSON data
+                    const company = data.found[0].date_generale;
+                    const dataToSend = {
+                        email: email,
+                        company: company
+                    };
+
+                    fetch('/send_company_details', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dataToSend)
+                    })
+                    .then(response => {
+                    if (response.ok) {
+                        // Request successful
+                        console.log('Company details sent successfully');
+                    } else {
+                        // Request failed
+                        console.error('Failed to send company details');
+                    }
+                    })
+                    .catch(error => {
+                    console.error('Error occurred while sending company details:', error);
+                    });
+
+                    $('#details').css('display', 'block');
+                    $('#cui').text(`CUI: ${company.cui}`);
+                    $('#denumire').text(`Denumire: ${company.denumire}`);
+                    $('#adresa').text(`Adresa: ${company.adresa}`);
+                    $('#nrRegCom').text(`Numar Registrul Comertului: ${company.nrRegCom}`);
+                    openPopup('companyDetails');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching JSON:', error);
+                    openPopup('notFound');
+                }
+            });
+        }
+
+        function closeNotFound() {
+            closePopup('notFound');
+            window.location.reload();
+        }
+    </script>
+</body>
+</html>

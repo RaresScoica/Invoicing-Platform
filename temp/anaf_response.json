@@ -1,0 +1,84 @@
+{
+    "cod": 200,
+    "message": "SUCCESS",
+    "found": [
+        {
+            "date_generale": {
+                "cui": 46144500,
+                "data": "2024-04-22",
+                "denumire": "SOLAR PLANNERS S.R.L.",
+                "adresa": "MUNICIPIUL BUCUREŞTI, SECTOR 5, STR. ION CREANGĂ, NR.7, CAMERA 3, BIROUL NR.2, AP.25",
+                "nrRegCom": "J40/9332/2022",
+                "telefon": "",
+                "fax": "",
+                "codPostal": "50864",
+                "act": "",
+                "stare_inregistrare": "INREGISTRAT din data 18.05.2022",
+                "data_inregistrare": "2022-05-18",
+                "cod_CAEN": "4674",
+                "iban": "",
+                "statusRO_e_Factura": false,
+                "organFiscalCompetent": "Direcţia Generală de Administrare a Marilor Contribuabili",
+                "forma_de_proprietate": "PROPR.PRIVATA-CAPITAL PRIVAT AUTOHTON",
+                "forma_organizare": "PERSOANA JURIDICA",
+                "forma_juridica": "SOCIETATE COMERCIALĂ CU RĂSPUNDERE LIMITATĂ"
+            },
+            "inregistrare_scop_Tva": {
+                "scpTVA": true,
+                "perioade_TVA": [
+                    {
+                        "data_inceput_ScpTVA": "2022-07-01",
+                        "data_sfarsit_ScpTVA": "",
+                        "data_anul_imp_ScpTVA": "",
+                        "mesaj_ScpTVA": ""
+                    }
+                ]
+            },
+            "inregistrare_RTVAI": {
+                "dataInceputTvaInc": "",
+                "dataSfarsitTvaInc": "",
+                "dataActualizareTvaInc": "",
+                "dataPublicareTvaInc": "",
+                "tipActTvaInc": "",
+                "statusTvaIncasare": false
+            },
+            "stare_inactiv": {
+                "dataInactivare": "",
+                "dataReactivare": "",
+                "dataPublicare": "",
+                "dataRadiere": "",
+                "statusInactivi": false
+            },
+            "inregistrare_SplitTVA": {
+                "dataInceputSplitTVA": "",
+                "dataAnulareSplitTVA": "",
+                "statusSplitTVA": false
+            },
+            "adresa_sediu_social": {
+                "sdenumire_Strada": "Str. Ion Creangă",
+                "snumar_Strada": "7",
+                "sdenumire_Localitate": "Sector 5 Mun. Bucureşti",
+                "scod_Localitate": "5",
+                "sdenumire_Judet": "MUNICIPIUL BUCUREŞTI",
+                "scod_Judet": "40",
+                "scod_JudetAuto": "B",
+                "stara": "",
+                "sdetalii_Adresa": "CAMERA 3, BIROUL NR.2",
+                "scod_Postal": "50864"
+            },
+            "adresa_domiciliu_fiscal": {
+                "ddenumire_Strada": "Str. Ion Creangă",
+                "dnumar_Strada": "7",
+                "ddenumire_Localitate": "Sector 5 Mun. Bucureşti",
+                "dcod_Localitate": "5",
+                "ddenumire_Judet": "MUNICIPIUL BUCUREŞTI",
+                "dcod_Judet": "40",
+                "dcod_JudetAuto": "B",
+                "dtara": "",
+                "ddetalii_Adresa": "CAMERA 3, BIROUL NR.2",
+                "dcod_Postal": "50864"
+            }
+        }
+    ],
+    "notFound": []
+}
