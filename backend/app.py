@@ -135,7 +135,7 @@ def fetch_anaf_data(cui, attempts=2):
 
 # Function to save JSON data to a temporary file
 def save_json(data):
-    file_location = "C:/Users/developer/Documents/ws-server/platform/temp/anaf_response.json"  # Define temporary file path
+    file_location = "../temp/anaf_response.json"  # Define temporary file path
     with open(file_location, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     return file_location
