@@ -4,21 +4,21 @@
     "found": [
         {
             "date_generale": {
-                "cui": 46144500,
-                "data": "2024-04-22",
-                "denumire": "SOLAR PLANNERS S.R.L.",
-                "adresa": "MUNICIPIUL BUCUREŞTI, SECTOR 5, STR. ION CREANGĂ, NR.7, CAMERA 3, BIROUL NR.2, AP.25",
-                "nrRegCom": "J40/9332/2022",
-                "telefon": "",
+                "cui": 22686237,
+                "data": "2024-05-28",
+                "denumire": "IDENTITY LEARNING  SRL",
+                "adresa": "JUD. ILFOV, ORŞ. MĂGURELE, STR. CIOCÂRLIEI, NR.11, C2",
+                "nrRegCom": "J23/3344/2017",
+                "telefon": "0724280173",
                 "fax": "",
-                "codPostal": "50864",
+                "codPostal": "77125",
                 "act": "",
-                "stare_inregistrare": "INREGISTRAT din data 18.05.2022",
-                "data_inregistrare": "2022-05-18",
-                "cod_CAEN": "4674",
+                "stare_inregistrare": "TRANSFER(SOSIRE) din data 28.06.2017",
+                "data_inregistrare": "2007-11-05",
+                "cod_CAEN": "8559",
                 "iban": "",
                 "statusRO_e_Factura": false,
-                "organFiscalCompetent": "Direcţia Generală de Administrare a Marilor Contribuabili",
+                "organFiscalCompetent": "Serviciul Fiscal Orăşenesc Bragadiru",
                 "forma_de_proprietate": "PROPR.PRIVATA-CAPITAL PRIVAT AUTOHTON",
                 "forma_organizare": "PERSOANA JURIDICA",
                 "forma_juridica": "SOCIETATE COMERCIALĂ CU RĂSPUNDERE LIMITATĂ"
@@ -27,7 +27,7 @@
                 "scpTVA": true,
                 "perioade_TVA": [
                     {
-                        "data_inceput_ScpTVA": "2022-07-01",
+                        "data_inceput_ScpTVA": "2007-11-06",
                         "data_sfarsit_ScpTVA": "",
                         "data_anul_imp_ScpTVA": "",
                         "mesaj_ScpTVA": ""
@@ -35,12 +35,12 @@
                 ]
             },
             "inregistrare_RTVAI": {
-                "dataInceputTvaInc": "",
+                "dataInceputTvaInc": "2013-01-01",
                 "dataSfarsitTvaInc": "",
-                "dataActualizareTvaInc": "",
-                "dataPublicareTvaInc": "",
-                "tipActTvaInc": "",
-                "statusTvaIncasare": false
+                "dataActualizareTvaInc": "2012-12-27",
+                "dataPublicareTvaInc": "2012-12-28",
+                "tipActTvaInc": "Inregistrare",
+                "statusTvaIncasare": true
             },
             "stare_inactiv": {
                 "dataInactivare": "",
@@ -55,28 +55,28 @@
                 "statusSplitTVA": false
             },
             "adresa_sediu_social": {
-                "sdenumire_Strada": "Str. Ion Creangă",
-                "snumar_Strada": "7",
-                "sdenumire_Localitate": "Sector 5 Mun. Bucureşti",
-                "scod_Localitate": "5",
-                "sdenumire_Judet": "MUNICIPIUL BUCUREŞTI",
-                "scod_Judet": "40",
-                "scod_JudetAuto": "B",
+                "sdenumire_Strada": "Str. Ciocârliei",
+                "snumar_Strada": "11",
+                "sdenumire_Localitate": "Orş. Măgurele",
+                "scod_Localitate": "87",
+                "sdenumire_Judet": "ILFOV",
+                "scod_Judet": "23",
+                "scod_JudetAuto": "IF",
                 "stara": "",
-                "sdetalii_Adresa": "CAMERA 3, BIROUL NR.2",
-                "scod_Postal": "50864"
+                "sdetalii_Adresa": "C2",
+                "scod_Postal": "77125"
             },
             "adresa_domiciliu_fiscal": {
-                "ddenumire_Strada": "Str. Ion Creangă",
-                "dnumar_Strada": "7",
-                "ddenumire_Localitate": "Sector 5 Mun. Bucureşti",
-                "dcod_Localitate": "5",
-                "ddenumire_Judet": "MUNICIPIUL BUCUREŞTI",
-                "dcod_Judet": "40",
-                "dcod_JudetAuto": "B",
+                "ddenumire_Strada": "Str. Ciocârliei",
+                "dnumar_Strada": "11",
+                "ddenumire_Localitate": "Orş. Măgurele",
+                "dcod_Localitate": "87",
+                "ddenumire_Judet": "ILFOV",
+                "dcod_Judet": "23",
+                "dcod_JudetAuto": "IF",
                 "dtara": "",
-                "ddetalii_Adresa": "CAMERA 3, BIROUL NR.2",
-                "dcod_Postal": "50864"
+                "ddetalii_Adresa": "C2",
+                "dcod_Postal": "77125"
             }
         }
     ],
