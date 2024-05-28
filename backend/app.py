@@ -24,8 +24,12 @@ load_dotenv()
 frontend_folder = os.path.join(os.path.dirname(__file__), '../frontend')
 app = Flask(__name__, template_folder=os.path.join(frontend_folder, 'templates'))
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-wkhtmltopdf_path = os.getenv('WKHTMLTOPDF_PATH')
 uri = os.getenv('MONGO_URI')
+
+if 'DYNO' in os.environ:  # if running on Heroku
+    wkhtmltopdf_path = '/app/bin/wkhtmltopdf'
+else:
+    wkhtmltopdf_path = os.getenv('WKHTMLTOPDF_PATH')
 
 # Configuration for pdfkit
 config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
