@@ -97,9 +97,9 @@ def success():
     html = render_template('invoice.html', image_data=base64_image, email=email, company_details=company_details, transactionDetails=transactionDetails, current_date=current_date)
 
     # Convert HTML to PDF and save to the temporary file
-    pdfkit.from_string(html, f"facturi/factura_{transactionId}.pdf", configuration=config)
+    pdfkit.from_string(html, f"/app/backend/facturi/factura_{transactionId}.pdf", configuration=config)
 
-    send_email(f"facturi/factura_{transactionId}.pdf", transactionId, email)
+    send_email(f"/app/backend/facturi/factura_{transactionId}.pdf", transactionId, email)
 
     # Send the PDF file as a downloadable attachment
     # return send_file(f"facturi/factura_{transactionId}.pdf", as_attachment=True)
