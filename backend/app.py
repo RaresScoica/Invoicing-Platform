@@ -135,14 +135,20 @@ def fetch_anaf_data(cui, attempts=2):
 
 # Function to save JSON data to a temporary file
 def save_json(data):
-    file_location = "/tmp/anaf_response.json"  # Define temporary file path
+    if 'DYNO' in os.environ:  # if running on Heroku
+        file_location = "/tmp/anaf_response.json"
+    else:
+        file_location = "../temp/anaf_response.json"  # Define temporary file path
     with open(file_location, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     return file_location
 
 @app.route('/send_email_and_cui', methods=['POST'])
 def send_email_and_cui():
-    file_path = '/tmp/anaf_response.json'
+    if 'DYNO' in os.environ:  # if running on Heroku
+        file_path = "/tmp/anaf_response.json"
+    else:
+        file_path = "../temp/anaf_response.json"
     if os.path.exists(file_path):
         os.remove(file_path)
 
@@ -191,10 +197,16 @@ def send_company_details():
 
 @app.route('/get_temp_file/<path:filename>')
 def get_temp_file(filename):
-    file_path = '/tmp/anaf_response.json'
+    if 'DYNO' in os.environ:  # if running on Heroku
+        file_path = "/tmp/anaf_response.json"
+    else:
+        file_path = "../temp/anaf_response.json"
     if os.path.exists(file_path):
         # Serve the temporary file to the client
-        return send_from_directory('C:/Users/developer/Documents/ws-server/platform/temp', filename)
+        if 'DYNO' in os.environ:  # if running on Heroku
+            return send_from_directory('/tmp', filename)
+        else:
+            return send_from_directory('C:/Users/developer/Documents/ws-server/platform/temp', filename)
     else:
         print("CUI not found")
         return redirect(url_for('index'))
