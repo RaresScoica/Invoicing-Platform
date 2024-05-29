@@ -26,6 +26,9 @@ app = Flask(__name__, template_folder=os.path.join(frontend_folder, 'templates')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 uri = os.getenv('MONGO_URI')
 
+current_directory = os.getcwd()
+print("Current Working Directory:", current_directory)
+
 if 'DYNO' in os.environ:  # if running on Heroku
     wkhtmltopdf_path = '/app/bin/wkhtmltopdf'
 else:
@@ -84,7 +87,7 @@ def success():
     # Format the datetime object in the desired format
     current_date = parsed_time.strftime("%d/%m/%Y %H:%M")
 
-    with open('/frontend/images/dfg_logo.png', 'rb') as f:
+    with open('../frontend/images/dfg_logo.png', 'rb') as f:
         image_data = f.read()
 
     # Convert image data to base64-encoded string
@@ -305,7 +308,7 @@ def send_email(attachment_file, transactionId, email):
     msg.attach(MIMEText(body, 'html'))
 
     # Attach the logo image
-    with open("/frontend/images/logo_nobg.png", 'rb') as f:
+    with open("../frontend/images/logo_nobg.png", 'rb') as f:
         logo = MIMEImage(f.read(), _subtype="svg+xml")
         logo.add_header('Content-ID', '<logo>')
         msg.attach(logo)
