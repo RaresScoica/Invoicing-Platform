@@ -15,7 +15,7 @@ from email.mime.image import MIMEImage
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
-from flask import Flask, redirect, render_template, request, jsonify, send_file, send_from_directory, session, url_for
+from flask import Flask, Response, redirect, render_template, request, jsonify, send_file, send_from_directory, session, stream_with_context, url_for
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 
@@ -111,13 +111,22 @@ def success():
     html = render_template('invoice.html', image_data=base64_image, email=email, company_details=company_details, transactionDetails=transactionDetails, current_date=current_date)
 
     # Convert HTML to PDF and save to the temporary file
-    pdfkit.from_string(html, f"/app/backend/facturi/factura_{transactionId}.pdf", configuration=config)
+    # pdfkit.from_string(html, f"/app/backend/facturi/factura_{transactionId}.pdf", configuration=config)
 
-    send_email(f"/app/backend/facturi/factura_{transactionId}.pdf", transactionId, email)
+    # send_email(f"/app/backend/facturi/factura_{transactionId}.pdf", transactionId, email)
 
-    # Send the PDF file as a downloadable attachment
-    # return send_file(f"facturi/factura_{transactionId}.pdf", as_attachment=True)
-    return render_template('success.html', email=email)
+    # # Send the PDF file as a downloadable attachment
+    # # return send_file(f"facturi/factura_{transactionId}.pdf", as_attachment=True)
+    # return render_template('success.html', email=email)
+
+    @stream_with_context
+    def generate():
+        pdf = pdfkit.from_string(html, False, configuration=config)
+        yield pdf
+
+    return Response(generate(), content_type='application/pdf', headers={
+        'Content-Disposition': f'attachment; filename=factura_{transactionId}.pdf'
+    })
 
 def remove_alpha_chars(s):
     """Remove non-digit characters from a string."""
