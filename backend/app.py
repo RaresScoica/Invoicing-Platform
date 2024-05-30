@@ -113,7 +113,7 @@ def success():
 
     # # Send the PDF file as a downloadable attachment
     # # return send_file(f"facturi/factura_{transactionId}.pdf", as_attachment=True)
-    # return render_template('success.html', email=email)
+    return render_template('success.html', email=email)
 
     # @stream_with_context
     # def generate():
