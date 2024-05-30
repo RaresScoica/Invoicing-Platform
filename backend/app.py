@@ -37,18 +37,8 @@ else:
 # Configuration for pdfkit
 config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
 
-# MongoDB setup
-client = MongoClient(uri)
-
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi('1'), tlsCAFile=certifi.where())
-
-# Access the database and collection
-db = client['EV_Stations']
-collection = db['transactions']
-
-# Ensure an index on the TransactionID field
-collection.create_index('TransactionID', unique=True)
 
 # Send a ping to confirm a successful connection
 try:
