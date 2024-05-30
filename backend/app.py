@@ -96,9 +96,9 @@ def success():
 
     if 'DYNO' in os.environ:  # if running on Heroku
         # Convert HTML to PDF and save to the temporary file
-        pdfkit.from_string(html, f"app/backend/facturi/factura_{transactionId}.pdf", configuration=config)
+        pdfkit.from_string(html, f"/app/backend/facturi/factura_{transactionId}.pdf", configuration=config)
 
-        send_emails(f"app/backend/facturi/factura_{transactionId}.pdf", transactionId, email)
+        send_emails(f"/app/backend/facturi/factura_{transactionId}.pdf", transactionId, email)
     else:
         # Convert HTML to PDF and save to the temporary file
         pdfkit.from_string(html, f"facturi/factura_{transactionId}.pdf", configuration=config)
@@ -310,7 +310,7 @@ def send_emails(attachment_file, transactionId, email):
 
     if 'DYNO' in os.environ:  # if running on Heroku
         # Attach the logo image
-        with open("app/frontend/images/logo_nobg.png", 'rb') as f:
+        with open("/app/frontend/images/logo_nobg.png", 'rb') as f:
             logo = MIMEImage(f.read(), _subtype="svg+xml")
             logo.add_header('Content-ID', '<logo>')
             msg.attach(logo)
