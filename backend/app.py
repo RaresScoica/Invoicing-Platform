@@ -98,12 +98,12 @@ def success():
         # Convert HTML to PDF and save to the temporary file
         pdfkit.from_string(html, f"app/backend/facturi/factura_{transactionId}.pdf", configuration=config)
 
-        send_email(f"app/backend/facturi/factura_{transactionId}.pdf", transactionId, email)
+        send_emails(f"app/backend/facturi/factura_{transactionId}.pdf", transactionId, email)
     else:
         # Convert HTML to PDF and save to the temporary file
         pdfkit.from_string(html, f"facturi/factura_{transactionId}.pdf", configuration=config)
 
-        send_email(f"facturi/factura_{transactionId}.pdf", transactionId, email)
+        send_emails(f"facturi/factura_{transactionId}.pdf", transactionId, email)
 
     # Send the PDF file as a downloadable attachment
     # return send_file(f"facturi/factura_{transactionId}.pdf", as_attachment=True)
@@ -215,7 +215,7 @@ def get_temp_file(filename):
         print("CUI not found")
         return redirect(url_for('index'))
     
-def send_email(attachment_file, transactionId, email):
+def send_emails(attachment_file, transactionId, email):
     # Get SMTP credentials from environmental variables
     smtp_username = "rares.goiceanu@arsek.ro"
     smtp_password = "jdm,Bass2000"
