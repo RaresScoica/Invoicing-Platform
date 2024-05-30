@@ -82,7 +82,7 @@ def success():
     current_date = parsed_time.strftime("%d/%m/%Y %H:%M")
 
     if 'DYNO' in os.environ:  # if running on Heroku
-        with open('app/frontend/images/dfg_logo.png', 'rb') as f:
+        with open('/app/frontend/images/dfg_logo.png', 'rb') as f:
             image_data = f.read()
     else:
         with open('../frontend/images/dfg_logo.png', 'rb') as f:
