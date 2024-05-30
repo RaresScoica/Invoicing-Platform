@@ -50,6 +50,17 @@ try:
 except Exception as e:
     print(e)
 
+def read_file_in_chunks(file_path, chunk_size=1024):
+    with open(file_path, 'rb') as file:
+        while chunk := file.read(chunk_size):
+            yield chunk
+
+def encode_file_to_base64(file_path):
+    encoded_chunks = []
+    for chunk in read_file_in_chunks(file_path):
+        encoded_chunks.append(base64.b64encode(chunk).decode('utf-8'))
+    return ''.join(encoded_chunks)
+
 @app.route('/')
 def index():
     session.clear()
@@ -87,11 +98,14 @@ def success():
     # Format the datetime object in the desired format
     current_date = parsed_time.strftime("%d/%m/%Y %H:%M")
 
-    with open('/app/frontend/images/dfg_logo.png', 'rb') as f:
-        image_data = f.read()
+    # with open('/app/frontend/images/dfg_logo.png', 'rb') as f:
+    #     image_data = f.read()
 
-    # Convert image data to base64-encoded string
-    base64_image = base64.b64encode(image_data).decode('utf-8')
+    # # Convert image data to base64-encoded string
+    # base64_image = base64.b64encode(image_data).decode('utf-8')
+
+    image_path = '/app/frontend/images/dfg_logo.png'
+    base64_image = encode_file_to_base64(image_path)
 
     # Render the HTML template for the invoice and pass session storage data
     html = render_template('invoice.html', image_data=base64_image, email=email, company_details=company_details, transactionDetails=transactionDetails, current_date=current_date)
@@ -313,17 +327,26 @@ def send_email(attachment_file, transactionId, email):
         logo.add_header('Content-ID', '<logo>')
         msg.attach(logo)
 
-    # Attach file
-    print(attachment_file)
-    attachment = open(attachment_file, "rb")
-    p = MIMEBase('application', 'octet-stream')
-    p.set_payload(attachment.read())
-    encoders.encode_base64(p)
-    # Get just the filename from the attachment_file path
+    attachment = MIMEBase('application', 'octet-stream')
+    with open(attachment_file, 'rb') as f:
+        for chunk in read_file_in_chunks(attachment_file):
+            attachment.set_payload(chunk)
+    encoders.encode_base64(attachment)
     attachment_filename = os.path.basename(attachment_file)
+    attachment.add_header('Content-Disposition', f'attachment; filename={attachment_filename}')
+    msg.attach(attachment)
+
+    # # Attach file
+    # print(attachment_file)
+    # attachment = open(attachment_file, "rb")
+    # p = MIMEBase('application', 'octet-stream')
+    # p.set_payload(attachment.read())
+    # encoders.encode_base64(p)
+    # # Get just the filename from the attachment_file path
+    # attachment_filename = os.path.basename(attachment_file)
     
-    p.add_header('Content-Disposition', f'attachment; filename={attachment_filename}')
-    msg.attach(p)
+    # p.add_header('Content-Disposition', f'attachment; filename={attachment_filename}')
+    # msg.attach(p)
 
     # Connect to SMTP server and send email
     smtp_server = "smtp.hostinger.com"
