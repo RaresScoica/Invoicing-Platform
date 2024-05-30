@@ -210,7 +210,10 @@ def get_temp_file(filename):
         file_path = '../temp/anaf_response.json'
     if os.path.exists(file_path):
         # Serve the temporary file to the client
-        return send_from_directory('C:/Users/developer/Documents/ws-server/platform/temp', filename)
+        if 'DYNO' in os.environ:  # if running on Heroku
+            return send_from_directory('/tmp', filename)
+        else:
+            return send_from_directory('C:/Users/developer/Documents/ws-server/platform/temp', filename)
     else:
         print("CUI not found")
         return redirect(url_for('index'))
@@ -347,3 +350,4 @@ def send_emails(attachment_file, transactionId, email):
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+    
