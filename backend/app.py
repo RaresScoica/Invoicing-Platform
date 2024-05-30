@@ -15,7 +15,7 @@ from email.mime.image import MIMEImage
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
-from flask import Flask, redirect, render_template, request, jsonify, send_file, send_from_directory, session, url_for
+from flask import Flask, Response, redirect, render_template, request, jsonify, send_file, send_from_directory, session, stream_with_context, url_for
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 
@@ -82,7 +82,7 @@ def success():
     current_date = parsed_time.strftime("%d/%m/%Y %H:%M")
 
     if 'DYNO' in os.environ:  # if running on Heroku
-        with open('app/frontend/images/dfg_logo.png', 'rb') as f:
+        with open('/app/frontend/images/dfg_logo.png', 'rb') as f:
             image_data = f.read()
     else:
         with open('../frontend/images/dfg_logo.png', 'rb') as f:
@@ -91,6 +91,12 @@ def success():
     # Convert image data to base64-encoded string
     base64_image = base64.b64encode(image_data).decode('utf-8')
 
+    # if 'DYNO' in os.environ:  # if running on Heroku
+    #     image_path = '/app/frontend/images/dfg_logo.png'
+    # else:
+    #     image_path = '../frontend/images/dfg_logo.png'
+    # base64_image = encode_file_to_base64(image_path)
+
     # Render the HTML template for the invoice and pass session storage data
     html = render_template('invoice.html', image_data=base64_image, email=email, company_details=company_details, transactionDetails=transactionDetails, current_date=current_date)
 
@@ -98,16 +104,25 @@ def success():
         # Convert HTML to PDF and save to the temporary file
         pdfkit.from_string(html, f"/app/backend/facturi/factura_{transactionId}.pdf", configuration=config)
 
-        send_emails(f"/app/backend/facturi/factura_{transactionId}.pdf", transactionId, email)
+        send_email(f"/app/backend/facturi/factura_{transactionId}.pdf", transactionId, email)
     else:
         # Convert HTML to PDF and save to the temporary file
-        pdfkit.from_string(html, f"facturi/factura_{transactionId}.pdf", configuration=config)
+        pdfkit.from_string(html, f"/facturi/factura_{transactionId}.pdf", configuration=config)
 
-        send_emails(f"facturi/factura_{transactionId}.pdf", transactionId, email)
+        send_email(f"/facturi/factura_{transactionId}.pdf", transactionId, email)
 
-    # Send the PDF file as a downloadable attachment
-    # return send_file(f"facturi/factura_{transactionId}.pdf", as_attachment=True)
-    return render_template('success.html', email=email)
+    # # Send the PDF file as a downloadable attachment
+    # # return send_file(f"facturi/factura_{transactionId}.pdf", as_attachment=True)
+    # return render_template('success.html', email=email)
+
+    # @stream_with_context
+    # def generate():
+    #     pdf = pdfkit.from_string(html, False, configuration=config)
+    #     yield pdf
+
+    # return Response(generate(), content_type='application/pdf', headers={
+    #     'Content-Disposition': f'attachment; filename=factura_{transactionId}.pdf'
+    # })
 
 def remove_alpha_chars(s):
     """Remove non-digit characters from a string."""
@@ -145,7 +160,7 @@ def save_json(data):
     if 'DYNO' in os.environ:  # if running on Heroku
         file_location = "/tmp/anaf_response.json"
     else:
-        file_location = "C:/Users/developer/Documents/ws-server/platform/temp/anaf_response.json"  # Define temporary file path
+        file_location = "../temp/anaf_response.json"  # Define temporary file path
     with open(file_location, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     return file_location
@@ -155,7 +170,7 @@ def send_email_and_cui():
     if 'DYNO' in os.environ:  # if running on Heroku
         file_path = "/tmp/anaf_response.json"
     else:
-        file_path = '../temp/anaf_response.json'
+        file_path = "../temp/anaf_response.json"
     if os.path.exists(file_path):
         os.remove(file_path)
 
@@ -207,15 +222,18 @@ def get_temp_file(filename):
     if 'DYNO' in os.environ:  # if running on Heroku
         file_path = "/tmp/anaf_response.json"
     else:
-        file_path = '../temp/anaf_response.json'
+        file_path = "../temp/anaf_response.json"
     if os.path.exists(file_path):
         # Serve the temporary file to the client
-        return send_from_directory('C:/Users/developer/Documents/ws-server/platform/temp', filename)
+        if 'DYNO' in os.environ:  # if running on Heroku
+            return send_from_directory('/tmp', filename)
+        else:
+            return send_from_directory('C:/Users/developer/Documents/ws-server/platform/temp', filename)
     else:
         print("CUI not found")
         return redirect(url_for('index'))
     
-def send_emails(attachment_file, transactionId, email):
+def send_email(attachment_file, transactionId, email):
     # Get SMTP credentials from environmental variables
     smtp_username = "rares.goiceanu@arsek.ro"
     smtp_password = "jdm,Bass2000"
@@ -308,18 +326,26 @@ def send_emails(attachment_file, transactionId, email):
     #msg.attach(MIMEBase('text', 'plain'))
     msg.attach(MIMEText(body, 'html'))
 
+    # Attach the logo image
     if 'DYNO' in os.environ:  # if running on Heroku
-        # Attach the logo image
         with open("/app/frontend/images/logo_nobg.png", 'rb') as f:
             logo = MIMEImage(f.read(), _subtype="svg+xml")
             logo.add_header('Content-ID', '<logo>')
             msg.attach(logo)
     else:
-        # Attach the logo image
         with open("../frontend/images/logo_nobg.png", 'rb') as f:
             logo = MIMEImage(f.read(), _subtype="svg+xml")
             logo.add_header('Content-ID', '<logo>')
             msg.attach(logo)
+
+    # attachment = MIMEBase('application', 'octet-stream')
+    # with open(attachment_file, 'rb') as f:
+    #     for chunk in read_file_in_chunks(attachment_file):
+    #         attachment.set_payload(chunk)
+    # encoders.encode_base64(attachment)
+    # attachment_filename = os.path.basename(attachment_file)
+    # attachment.add_header('Content-Disposition', f'attachment; filename={attachment_filename}')
+    # msg.attach(attachment)
 
     # Attach file
     print(attachment_file)
@@ -347,4 +373,3 @@ def send_emails(attachment_file, transactionId, email):
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
-    
