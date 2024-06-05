@@ -28,6 +28,8 @@ uri = os.getenv('MONGO_URI')
 
 if 'DYNO' in os.environ:  # if running on Heroku
     wkhtmltopdf_path = '/app/bin/wkhtmltopdf'
+elif 'RENDER' in os.environ:  # Check for Render environment
+    wkhtmltopdf_path = '/usr/local/bin/wkhtmltopdf'
 else:
     wkhtmltopdf_path = os.getenv('WKHTMLTOPDF_PATH')
 
