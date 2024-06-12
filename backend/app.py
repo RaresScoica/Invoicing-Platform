@@ -29,9 +29,9 @@ uri = os.getenv('MONGO_URI')
 if 'DYNO' in os.environ:  # if running on Heroku
     wkhtmltopdf_path = '/app/bin/wkhtmltopdf'
 elif 'RENDER' in os.environ:  # Check for Render environment
-    wkhtmltopdf_path = '/usr/local/bin/wkhtmltopdf'
+    wkhtmltopdf_path = '/platform/wkhtmltopdf.exe'
 else:
-    wkhtmltopdf_path = os.getenv('WKHTMLTOPDF_PATH')
+    wkhtmltopdf_path = os.getenv('WKHTMLTOPDF_PATH_PROJECT')
 
 # Configuration for pdfkit
 config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
