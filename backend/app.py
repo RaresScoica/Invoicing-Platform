@@ -196,6 +196,8 @@ def send_email():
     session['email'] = email
     session['transactionId'] = transactionId
 
+    print("am trecut")
+
     return jsonify({'message': 'Data Received'})
 
 @app.route('/send_company_details', methods=['POST'])
