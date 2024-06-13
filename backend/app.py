@@ -59,8 +59,11 @@ def transaction(transactionId):
 def success():
     # Fetch session storage data
     email = session.get('email')
-    company_details = session.get('company_details')
     transactionId = session.get('transactionId')
+    try:
+        company_details = session.get('company_details')
+    except:
+        pass
 
     try:
         transactionId = int(transactionId)
