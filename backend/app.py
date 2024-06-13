@@ -110,6 +110,7 @@ def success():
 
         send_emails(f"facturi/factura_{transactionId}.pdf", transactionId, email)
 
+    print("am ajuns!!!")
     # Send the PDF file as a downloadable attachment
     # return send_file(f"facturi/factura_{transactionId}.pdf", as_attachment=True)
     return render_template('success.html', email=email)
