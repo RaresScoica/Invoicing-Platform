@@ -1,4 +1,5 @@
 import base64
+import logging
 import certifi
 import os
 import requests
@@ -15,11 +16,13 @@ from email.mime.image import MIMEImage
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
-from flask import Flask, redirect, render_template, request, jsonify, send_file, send_from_directory, session, url_for
+from flask import Flask, redirect, render_template, request, jsonify, send_from_directory, session, url_for
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 
 load_dotenv()
+
+logging.basicConfig(level=logging.DEBUG)
 
 frontend_folder = os.path.join(os.path.dirname(__file__), '../frontend')
 app = Flask(__name__, template_folder=os.path.join(frontend_folder, 'templates'))
@@ -63,10 +66,10 @@ def success():
     try:
         company_details = session.get('company_details')
     except:
-        print("NU a fost furnizat un CUI")
+        logging.debug("Nu e CUI")
 
     if not email or not company_details or not transactionId:
-        print("nu i de bine")
+        logging.debug("nu i de bine")
 
     try:
         transactionId = int(transactionId)
@@ -196,7 +199,7 @@ def send_email():
     session['email'] = email
     session['transactionId'] = transactionId
 
-    print("am trecut")
+    logging.debug("am trecut")
 
     return jsonify({'message': 'Data Received'})
 
