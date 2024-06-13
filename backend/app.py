@@ -69,7 +69,7 @@ def success():
         logging.debug("Nu e CUI")
 
     if not email:
-        logging.debug("no email")
+        logging.debug(email)
     if not transactionId:
         logging.debug("no transactionId")
     if not company_details:
