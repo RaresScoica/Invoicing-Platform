@@ -63,7 +63,10 @@ def success():
     try:
         company_details = session.get('company_details')
     except:
-        pass
+        print("NU a fost furnizat un CUI")
+
+    if not email or not company_details or not transactionId:
+        print("nu i de bine")
 
     try:
         transactionId = int(transactionId)
@@ -110,7 +113,6 @@ def success():
 
         send_emails(f"facturi/factura_{transactionId}.pdf", transactionId, email)
 
-    print("am ajuns!!!")
     # Send the PDF file as a downloadable attachment
     # return send_file(f"facturi/factura_{transactionId}.pdf", as_attachment=True)
     return render_template('success.html', email=email)
