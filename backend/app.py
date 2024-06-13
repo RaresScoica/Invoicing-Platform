@@ -68,8 +68,12 @@ def success():
     except:
         logging.debug("Nu e CUI")
 
-    if not email or not company_details or not transactionId:
-        logging.debug("nu i de bine")
+    if not email:
+        logging.debug("no email")
+    if not transactionId:
+        logging.debug("no transactionId")
+    if not company_details:
+        logging.debug("no CUI")
 
     try:
         transactionId = int(transactionId)
