@@ -60,20 +60,17 @@ def transaction(transactionId):
 
 @app.route('/success')
 def success():
-    # Fetch session storage data
-    email = session.get('email')
-    transactionId = session.get('transactionId')
     try:
         company_details = session.get('company_details')
     except:
         logging.debug("Nu e CUI")
 
-    if not email:
-        logging.debug(email)
-    if not transactionId:
-        logging.debug("no transactionId")
-    if not company_details:
-        logging.debug("no CUI")
+    db = client['EV_Stations']
+    collection = db['current_transaction']
+
+    current = collection.find_one({"ID": "current"})
+    email = current.get("email")
+    transactionId = current.get("transactionId")
 
     try:
         transactionId = int(transactionId)
@@ -200,11 +197,15 @@ def send_email():
     email = data.get('email')
     transactionId = data.get('transactionId')
 
-    session['email'] = email
-    session['transactionId'] = transactionId
+    db = client['EV_Stations']
+    collection = db['current_transaction']
 
-    logging.debug("am trecut")
+    # Combine the $set updates into a single dictionary
+    update = {'$set': {'email': email, 'transactionId': transactionId}}
 
+    # Update the document
+    collection.update_one({"ID": "current"}, update, upsert=True)
+    
     return jsonify({'message': 'Data Received'})
 
 @app.route('/send_company_details', methods=['POST'])
