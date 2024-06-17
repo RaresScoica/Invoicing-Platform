@@ -96,6 +96,9 @@ def success():
     if 'DYNO' in os.environ:  # if running on Heroku
         with open('/app/frontend/images/dfg_logo.png', 'rb') as f:
             image_data = f.read()
+    elif 'RENDER' in os.environ:
+        with open('/app/backend/static/images/dfg_logo.png', 'rb') as f:
+            image_data = f.read()
     else:
         with open('../frontend/images/dfg_logo.png', 'rb') as f:
             image_data = f.read()
