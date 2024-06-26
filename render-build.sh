@@ -1,14 +1,7 @@
 #!/bin/bash
 set -e
 
-# Ensure apt directory structure exists
-mkdir -p /var/lib/apt/lists/partial
-
-# Update package lists
-apt-get update
-
-# Install wkhtmltopdf and its dependencies
-apt-get install -y xvfb libfontconfig wkhtmltopdf
+apt-get update && apt-get install -y wkhtmltopdf
 
 # Install Python dependencies
 pip install --no-cache-dir -r requirements.txt

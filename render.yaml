@@ -4,5 +4,10 @@ services:
     env: python
     plan: free
     buildCommand: |
+      apt-get update
+      apt-get install -y wget
+      wget https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.bionic_amd64.deb
+      apt-get install -y ./wkhtmltox_0.12.6-1.bionic_amd64.deb
+      ln -s /usr/local/bin/wkhtmltopdf /usr/bin/wkhtmltopdf  # Ensure it's in a known location
       pip install -r requirements.txt
     startCommand: python backend/app.py
