@@ -30,7 +30,7 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 uri = os.getenv('MONGO_URI')
 
 if 'DYNO' in os.environ:  # if running on Heroku
-    wkhtmltopdf_path = '/app/bin/wkhtmltopdf'
+    wkhtmltopdf_path = '/usr/local/bin/wkhtmltopdf'
 elif 'RENDER' in os.environ:  # Check for Render environment
     wkhtmltopdf_path = '/opt/render/project/src/wkhtmltopdf.exe'
 else:
