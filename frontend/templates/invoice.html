@@ -109,10 +109,10 @@
                 <tr>
                     <td>Energie/Energy</td>
                     <td>{{ transactionDetails.kwPrice }}</td>
-                    <td>{{ "%.2f"|format(transactionDetails.Amount/100/transactionDetails.kwPrice) }}</td>
-                    <td>{{ "%.2f"|format(transactionDetails.Amount/100/1.19) }}</td>
+                    <td>{{ "%.2f"|format(transactionDetails.finalAmount/100/transactionDetails.finalAmount) }}</td>
+                    <td>{{ "%.2f"|format(transactionDetails.finalAmount/100/1.19) }}</td>
                     <td>19</td>
-                    <td>{{ transactionDetails.Amount/100 }}</td>
+                    <td>{{ transactionDetails.finalAmount/100 }}</td>
                 </tr>
             </tbody>
         </table>

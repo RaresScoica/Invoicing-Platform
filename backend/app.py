@@ -9,6 +9,8 @@ import pdfkit
 import datetime
 import smtplib
 
+from docx import Document
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from dotenv import load_dotenv
 from email import encoders
 from email.mime.base import MIMEBase
@@ -16,7 +18,7 @@ from email.mime.image import MIMEImage
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
-from flask import Flask, redirect, render_template, request, jsonify, send_from_directory, session, url_for
+from flask import Flask, redirect, render_template, request, jsonify, send_file, send_from_directory, session, url_for
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 
@@ -34,7 +36,7 @@ if 'DYNO' in os.environ:  # if running on Heroku
 elif 'RENDER' in os.environ:  # Check for Render environment
     wkhtmltopdf_path = '/opt/render/project/src/wkhtmltopdf.exe'
 else:
-    wkhtmltopdf_path = os.getenv('WKHTMLTOPDF_PATH_PROJECT')
+    wkhtmltopdf_path = os.getenv('WKHTMLTOPDF_PATH')
 
 # Configuration for pdfkit
 config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
@@ -62,15 +64,19 @@ def transaction(transactionId):
 def success():
     try:
         company_details = session.get('company_details')
+        print(company_details)
+        transactionId = session.get('transactionId')
+        email = session.get('email')
+        print(email)
     except:
         logging.debug("Nu e CUI")
 
     db = client['EV_Stations']
     collection = db['current_transaction']
 
-    current = collection.find_one({"ID": "current"})
-    email = current.get("email")
-    transactionId = current.get("transactionId")
+    # current = collection.find_one({"ID": "current"})
+    # email = current.get("email")
+    # transactionId = current.get("transactionId")
 
     try:
         transactionId = int(transactionId)
@@ -82,6 +88,7 @@ def success():
     collection = db['transactions']
 
     transactionDetails = collection.find_one({"TransactionID": transactionId})
+    print(transactionDetails)
 
     if transactionDetails == None:
         return redirect(url_for('index'))
@@ -117,13 +124,73 @@ def success():
         send_emails(f"/app/backend/facturi/factura_{transactionId}.pdf", transactionId, email)
     else:
         # Convert HTML to PDF and save to the temporary file
-        pdfkit.from_string(html, f"facturi/factura_{transactionId}.pdf", configuration=config)
+        # pdfkit.from_string(html, f"facturi/factura_{transactionId}.pdf", configuration=config)
 
-        send_emails(f"facturi/factura_{transactionId}.pdf", transactionId, email)
+        # send_emails(f"facturi/factura_{transactionId}.pdf", transactionId, email)
+
+        # Create the Word document
+        doc = Document()
+        doc.add_heading('Factura/Invoice', 0)
+
+        # Add company details
+        doc.add_heading('Furnizor/Seller', level=1)
+        doc.add_paragraph('DFG ACTIVE IMOBILIARE SRL')
+        doc.add_paragraph('CUI/Tax ID no: 15830118')
+        doc.add_paragraph('Adresa/Adress: MUNICIPIUL BUCUREŞTI, SECTOR 5, STR. ION CREANGĂ, NR.7, CAMERA 3, ET.6, AP.25')
+        doc.add_paragraph('Registrul comertului/Registration no: J40/13984/2003')
+
+        # Add customer details
+        doc.add_heading('Cumparator/Customer', level=1)
+        doc.add_paragraph(f'Denumire: {company_details["denumire"]}')
+        doc.add_paragraph(f'CUI/Tax ID no: {company_details["cui"]}')
+        doc.add_paragraph(f'Adresa/Adress: {company_details["adresa"]}')
+        doc.add_paragraph(f'Registrul comertului/Registration no: {company_details["nrRegCom"]}')
+        doc.add_paragraph(f'Email: {email}')
+
+        # Add invoice details
+        doc.add_heading('Detalii Factura/Invoice Details', level=2)
+        doc.add_paragraph(f'Numar factura/Invoice no: #12345')
+        doc.add_paragraph(f'Data emiterii/Date of issue: {current_date}')
+        doc.add_paragraph(f'Data livrarii/Date of delivery: {current_date}')
+
+        # Add transaction table
+        table = doc.add_table(rows=1, cols=6)
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'Denumire produs\nProduct name'
+        hdr_cells[1].text = 'Pret per KWh\nPrice per KWh\n(RON/KWh)'
+        hdr_cells[2].text = 'Cantitate\nQuantity\n(KWh)'
+        hdr_cells[3].text = 'Pret fara TVA\nPrice without VAT\n(RON)'
+        hdr_cells[4].text = 'TVA\nVAT\n(%)'
+        hdr_cells[5].text = 'Pret cu TVA\nPrice with VAT\n(RON)'
+
+        # Add a row for the transaction details
+        row_cells = table.add_row().cells
+        row_cells[0].text = 'Energie/Energy'
+        row_cells[1].text = f'{transactionDetails["kwPrice"]}'
+        quantity = transactionDetails["finalAmount"] / 100 / transactionDetails["kwPrice"]
+        price_without_vat = transactionDetails["finalAmount"] / 100 / 1.19
+        row_cells[2].text = f'{quantity:.2f}'
+        row_cells[3].text = f'{price_without_vat:.2f}'
+        row_cells[4].text = '19'
+        row_cells[5].text = f'{transactionDetails["finalAmount"] / 100:.2f}'
+
+        # Add footer
+        section = doc.sections[0]
+        footer = section.footer
+        footer_paragraph = footer.paragraphs[0]
+        footer_paragraph.text = "Email: solarPlannersEmail\nTelefon/Phone Number: 07xxx\nWebsite: solar.planners.ro\n\nFactura creata de Solar Planners SRL/Invoice created by Solar Planners SRL"
+        footer_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        
+        # Save the Word document
+        docx_filename = f"facturi/factura_{transactionDetails['TransactionID']}.docx"
+        # doc.save(docx_filename)
+
+        # Send the file as a response
+        return send_file(docx_filename, as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
     # Send the PDF file as a downloadable attachment
     # return send_file(f"facturi/factura_{transactionId}.pdf", as_attachment=True)
-    return render_template('success.html', email=email)
+    # return render_template('success.html', email=email)
 
 def remove_alpha_chars(s):
     """Remove non-digit characters from a string."""
