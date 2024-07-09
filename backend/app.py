@@ -31,15 +31,15 @@ app = Flask(__name__, template_folder=os.path.join(frontend_folder, 'templates')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 uri = os.getenv('MONGO_URI')
 
-if 'DYNO' in os.environ:  # if running on Heroku
-    wkhtmltopdf_path = '/usr/local/bin/wkhtmltopdf'
-elif 'RENDER' in os.environ:  # Check for Render environment
-    wkhtmltopdf_path = '/opt/render/project/src/wkhtmltopdf.exe'
-else:
-    wkhtmltopdf_path = os.getenv('WKHTMLTOPDF_PATH')
+# if 'DYNO' in os.environ:  # if running on Heroku
+#     wkhtmltopdf_path = '/usr/local/bin/wkhtmltopdf'
+# elif 'RENDER' in os.environ:  # Check for Render environment
+#     wkhtmltopdf_path = '/opt/render/project/src/wkhtmltopdf.exe'
+# else:
+#     wkhtmltopdf_path = os.getenv('WKHTMLTOPDF_PATH')
 
-# Configuration for pdfkit
-config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
+# # Configuration for pdfkit
+# config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
 
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi('1'), tlsCAFile=certifi.where())
