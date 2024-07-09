@@ -122,8 +122,6 @@ def success():
         # Convert HTML to PDF and save to the temporary file
         # pdfkit.from_string(html, f"facturi/factura_{transactionId}.pdf", configuration=config)
 
-        # send_emails(f"facturi/factura_{transactionId}.pdf", transactionId, email)
-
         # Create the Word document
         doc = Document()
         doc.add_heading('Factura/Invoice', 0)
@@ -135,13 +133,14 @@ def success():
         doc.add_paragraph('Adresa/Adress: MUNICIPIUL BUCUREŞTI, SECTOR 5, STR. ION CREANGĂ, NR.7, CAMERA 3, ET.6, AP.25')
         doc.add_paragraph('Registrul comertului/Registration no: J40/13984/2003')
 
-        # Add customer details
-        doc.add_heading('Cumparator/Customer', level=1)
-        doc.add_paragraph(f'Denumire: {company_details["denumire"]}')
-        doc.add_paragraph(f'CUI/Tax ID no: {company_details["cui"]}')
-        doc.add_paragraph(f'Adresa/Adress: {company_details["adresa"]}')
-        doc.add_paragraph(f'Registrul comertului/Registration no: {company_details["nrRegCom"]}')
-        doc.add_paragraph(f'Email: {email}')
+        if company_details:
+            # Add customer details
+            doc.add_heading('Cumparator/Customer', level=1)
+            doc.add_paragraph(f'Denumire: {company_details["denumire"]}')
+            doc.add_paragraph(f'CUI/Tax ID no: {company_details["cui"]}')
+            doc.add_paragraph(f'Adresa/Adress: {company_details["adresa"]}')
+            doc.add_paragraph(f'Registrul comertului/Registration no: {company_details["nrRegCom"]}')
+            doc.add_paragraph(f'Email: {email}')
 
         # Add invoice details
         doc.add_heading('Detalii Factura/Invoice Details', level=2)
@@ -181,12 +180,11 @@ def success():
         docx_filename = f"facturi/factura_{transactionDetails['TransactionID']}.docx"
         # doc.save(docx_filename)
 
+        # send_emails(f"facturi/factura_{transactionId}.pdf", transactionId, email)
+        # return render_template('success.html', email=email)
+        
         # Send the file as a response
         return send_file(docx_filename, as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-
-    # Send the PDF file as a downloadable attachment
-    # return send_file(f"facturi/factura_{transactionId}.pdf", as_attachment=True)
-    # return render_template('success.html', email=email)
 
 def remove_alpha_chars(s):
     """Remove non-digit characters from a string."""
