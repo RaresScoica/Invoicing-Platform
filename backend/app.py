@@ -177,7 +177,7 @@ def success():
         footer_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
         
         # Save the Word document
-        docx_filename = f"facturi/factura_{transactionDetails['TransactionID']}.docx"
+        docx_filename = f"facturi/factura.docx"
         doc.save(docx_filename)
 
         # send_emails(f"facturi/factura_{transactionId}.pdf", transactionId, email)
