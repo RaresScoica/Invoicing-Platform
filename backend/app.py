@@ -188,7 +188,7 @@ def success():
         doc.save(docx_filename)
 
         if 'RENDER' in os.environ:
-            send_emails(f"opt/render/project/src/backendfacturi/factura_{transactionId}.docx", transactionId, email)
+            send_emails(f"opt/render/project/src/backend/facturi/factura_{transactionId}.docx", transactionId, email)
         else:
             send_emails(f"facturi/factura_{transactionId}.docx", transactionId, email)
         return render_template('success.html', email=email)
