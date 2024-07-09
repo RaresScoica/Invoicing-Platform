@@ -178,7 +178,7 @@ def success():
         
         # Save the Word document
         docx_filename = f"facturi/factura_{transactionDetails['TransactionID']}.docx"
-        # doc.save(docx_filename)
+        doc.save(docx_filename)
 
         # send_emails(f"facturi/factura_{transactionId}.pdf", transactionId, email)
         # return render_template('success.html', email=email)
@@ -221,6 +221,8 @@ def fetch_anaf_data(cui, attempts=2):
 def save_json(data):
     if 'DYNO' in os.environ:  # if running on Heroku
         file_location = "/tmp/anaf_response.json"
+    elif 'RENDER' in os.environ:
+        file_location = "/temp/anaf_response.json"
     else:
         file_location = "C:/Users/developer/Documents/ws-server/platform/temp/anaf_response.json"  # Define temporary file path
     with open(file_location, 'w', encoding='utf-8') as f:
@@ -231,6 +233,8 @@ def save_json(data):
 def send_email_and_cui():
     if 'DYNO' in os.environ:  # if running on Heroku
         file_path = "/tmp/anaf_response.json"
+    elif 'RENDER' in os.environ:
+        file_location = "/temp/anaf_response.json"
     else:
         file_path = '../temp/anaf_response.json'
     if os.path.exists(file_path):
@@ -298,6 +302,8 @@ def send_company_details():
 def get_temp_file(filename):
     if 'DYNO' in os.environ:  # if running on Heroku
         file_path = "/tmp/anaf_response.json"
+    elif 'RENDER' in os.environ:
+        file_location = "/temp/anaf_response.json"
     else:
         file_path = '../temp/anaf_response.json'
     if os.path.exists(file_path):
