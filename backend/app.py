@@ -180,15 +180,22 @@ def success():
         footer_paragraph.text = "Email: solarPlannersEmail\nTelefon/Phone Number: 07xxx\nWebsite: solar.planners.ro\n\nFactura creata de Solar Planners SRL/Invoice created by Solar Planners SRL"
         footer_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
         
-        # Save the Word document
-        docx_filename = f"/opt/render/project/src/backend/facturi/factura_{transactionDetails['TransactionID']}.docx"
+        if 'RENDER' in os.environ:
+            # Save the Word document
+            docx_filename = f"/opt/render/project/src/backend/facturi/factura_{transactionId}.docx"
+        else:
+            docx_filename = f"facturi/factura_{transactionId}.docx"
+        
         doc.save(docx_filename)
 
-        # send_emails(f"facturi/factura_{transactionId}.pdf", transactionId, email)
-        # return render_template('success.html', email=email)
+        if 'RENDER' in os.environ:
+            send_emails(f"opt/render/project/src/backendfacturi/factura_{transactionId}.docx", transactionId, email)
+        else:
+            send_emails(f"facturi/factura_{transactionId}.docx", transactionId, email)
+        return render_template('success.html', email=email)
 
-        # Send the file as a response
-        return send_file(docx_filename, as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        # # Send the file as a response
+        # return send_file(docx_filename, as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
 def remove_alpha_chars(s):
     """Remove non-digit characters from a string."""
