@@ -234,7 +234,7 @@ def send_email_and_cui():
     if 'DYNO' in os.environ:  # if running on Heroku
         file_path = "/tmp/anaf_response.json"
     elif 'RENDER' in os.environ:
-        file_location = "/temp/anaf_response.json"
+        file_path = "/temp/anaf_response.json"
     else:
         file_path = '../temp/anaf_response.json'
     if os.path.exists(file_path):
@@ -303,7 +303,7 @@ def get_temp_file(filename):
     if 'DYNO' in os.environ:  # if running on Heroku
         file_path = "/tmp/anaf_response.json"
     elif 'RENDER' in os.environ:
-        file_location = "/temp/anaf_response.json"
+        file_path = "/temp/anaf_response.json"
     else:
         file_path = '../temp/anaf_response.json'
     if os.path.exists(file_path):
