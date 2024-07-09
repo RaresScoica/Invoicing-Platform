@@ -226,7 +226,7 @@ def save_json(data):
     if 'DYNO' in os.environ:  # if running on Heroku
         file_location = "/tmp/anaf_response.json"
     elif 'RENDER' in os.environ:
-        file_location = "/temp/anaf_response.json"
+        file_location = "/opt/render/project/src/temp/anaf_response.json"
     else:
         file_location = "C:/Users/developer/Documents/ws-server/platform/temp/anaf_response.json"  # Define temporary file path
     with open(file_location, 'w', encoding='utf-8') as f:
@@ -238,7 +238,7 @@ def send_email_and_cui():
     if 'DYNO' in os.environ:  # if running on Heroku
         file_path = "/tmp/anaf_response.json"
     elif 'RENDER' in os.environ:
-        file_path = "/temp/anaf_response.json"
+        file_path = "/opt/render/project/src/temp/anaf_response.json"
     else:
         file_path = '../temp/anaf_response.json'
     if os.path.exists(file_path):
@@ -307,7 +307,7 @@ def get_temp_file(filename):
     if 'DYNO' in os.environ:  # if running on Heroku
         file_path = "/tmp/anaf_response.json"
     elif 'RENDER' in os.environ:
-        file_path = "/temp/anaf_response.json"
+        file_path = "/opt/render/project/src/temp/anaf_response.json"
     else:
         file_path = '../temp/anaf_response.json'
     if os.path.exists(file_path):
