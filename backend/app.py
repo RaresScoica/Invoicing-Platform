@@ -141,6 +141,10 @@ def success():
             doc.add_paragraph(f'Adresa/Adress: {company_details["adresa"]}')
             doc.add_paragraph(f'Registrul comertului/Registration no: {company_details["nrRegCom"]}')
             doc.add_paragraph(f'Email: {email}')
+        else:
+            # Add customer details
+            doc.add_heading('Cumparator/Customer', level=1)
+            doc.add_paragraph(f'Email: {email}')
 
         # Add invoice details
         doc.add_heading('Detalii Factura/Invoice Details', level=2)
@@ -177,12 +181,12 @@ def success():
         footer_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
         
         # Save the Word document
-        docx_filename = f"facturi/factura.docx"
+        docx_filename = f"/opt/render/project/src/backend/facturi/factura_{transactionDetails['TransactionID']}.docx"
         doc.save(docx_filename)
 
         # send_emails(f"facturi/factura_{transactionId}.pdf", transactionId, email)
         # return render_template('success.html', email=email)
-        
+
         # Send the file as a response
         return send_file(docx_filename, as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
