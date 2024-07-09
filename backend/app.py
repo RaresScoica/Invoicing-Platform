@@ -64,19 +64,15 @@ def transaction(transactionId):
 def success():
     try:
         company_details = session.get('company_details')
-        print(company_details)
-        transactionId = session.get('transactionId')
-        email = session.get('email')
-        print(email)
     except:
         logging.debug("Nu e CUI")
 
     db = client['EV_Stations']
     collection = db['current_transaction']
 
-    # current = collection.find_one({"ID": "current"})
-    # email = current.get("email")
-    # transactionId = current.get("transactionId")
+    current = collection.find_one({"ID": "current"})
+    email = current.get("email")
+    transactionId = current.get("transactionId")
 
     try:
         transactionId = int(transactionId)
@@ -247,8 +243,17 @@ def send_email_and_cui():
     email = data.get('email')
     transactionId = data.get('transactionId')
 
-    session['email'] = email
-    session['transactionId'] = transactionId
+    # session['email'] = email
+    # session['transactionId'] = transactionId
+
+    db = client['EV_Stations']
+    collection = db['current_transaction']
+
+    # Combine the $set updates into a single dictionary
+    update = {'$set': {'email': email, 'transactionId': transactionId}}
+
+    # Update the document
+    collection.update_one({"ID": "current"}, update, upsert=True)
     
     if cui:
         cui_variable = cui
