@@ -100,8 +100,7 @@ def success():
         with open('/app/frontend/images/dfg_logo.png', 'rb') as f:
             image_data = f.read()
     elif 'RENDER' in os.environ:
-        image_path = os.path.join(app.root_path, 'static/images/dfg_logo.png')
-        with open(image_path, 'rb') as f:
+        with open('/opt/render/project/src/frontend/images/dfg_logo.png', 'rb') as f:
             image_data = f.read()
     else:
         with open('../frontend/images/dfg_logo.png', 'rb') as f:
@@ -321,6 +320,8 @@ def get_temp_file(filename):
         # Serve the temporary file to the client
         if 'DYNO' in os.environ:  # if running on Heroku
             return send_from_directory('/tmp', filename)
+        elif 'RENDER' in os.environ:
+            return send_from_directory('/opt/render/project/src/temp', filename)
         else:
             return send_from_directory('C:/Users/developer/Documents/ws-server/platform/temp', filename)
     else:
@@ -423,6 +424,12 @@ def send_emails(attachment_file, transactionId, email):
     if 'DYNO' in os.environ:  # if running on Heroku
         # Attach the logo image
         with open("/app/frontend/images/logo_nobg.png", 'rb') as f:
+            logo = MIMEImage(f.read(), _subtype="svg+xml")
+            logo.add_header('Content-ID', '<logo>')
+            msg.attach(logo)
+    elif 'RENDER' in os.environ:
+        # Attach the logo image
+        with open("/opt/render/project/src/frontend/images/logo_nobg.png", 'rb') as f:
             logo = MIMEImage(f.read(), _subtype="svg+xml")
             logo.add_header('Content-ID', '<logo>')
             msg.attach(logo)
