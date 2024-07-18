@@ -1,11 +1,11 @@
 import base64
 import logging
+import threading
 import certifi
 import os
 import requests
 import json
 import time
-import pdfkit
 import datetime
 import smtplib
 
@@ -18,7 +18,7 @@ from email.mime.image import MIMEImage
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
-from flask import Flask, redirect, render_template, request, jsonify, send_file, send_from_directory, session, url_for
+from flask import Flask, redirect, render_template, request, jsonify, send_from_directory, session, url_for
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 
@@ -31,16 +31,6 @@ app = Flask(__name__, template_folder=os.path.join(frontend_folder, 'templates')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 uri = os.getenv('MONGO_URI')
 
-# if 'DYNO' in os.environ:  # if running on Heroku
-#     wkhtmltopdf_path = '/usr/local/bin/wkhtmltopdf'
-# elif 'RENDER' in os.environ:  # Check for Render environment
-#     wkhtmltopdf_path = '/opt/render/project/src/wkhtmltopdf.exe'
-# else:
-#     wkhtmltopdf_path = os.getenv('WKHTMLTOPDF_PATH')
-
-# # Configuration for pdfkit
-# config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
-
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi('1'), tlsCAFile=certifi.where())
 
@@ -50,6 +40,23 @@ try:
     print("Pinged your deployment. You successfully connected to MongoDB!")
 except Exception as e:
     print(e)
+
+def watch_collection():
+    db = client['EV_Stations']
+    collection = db['transactions']
+    # Watch the collection for new inserts
+    with collection.watch() as stream:
+        for change in stream:
+            if change['operationType'] == 'insert':
+                # Handle the new object here
+                new_document = change['fullDocument']
+                print("New document inserted: ", new_document)
+                transactionId = new_document.get("TransactionID")
+                email = "rares.goiceanu@arsek.ro"
+                generate_docx(transactionId, email)
+
+# Start the Change Stream watcher in a separate thread
+threading.Thread(target=watch_collection, daemon=True).start()
 
 @app.route('/')
 def index():
@@ -62,11 +69,6 @@ def transaction(transactionId):
 
 @app.route('/success')
 def success():
-    try:
-        company_details = session.get('company_details')
-    except:
-        logging.debug("Nu e CUI")
-
     db = client['EV_Stations']
     collection = db['current_transaction']
 
@@ -74,9 +76,22 @@ def success():
     email = current.get("email")
     transactionId = current.get("transactionId")
 
+    generate_docx(transactionId, email)
+
+    return render_template('success.html', email=email)
+
+    # # Send the file as a response
+    # return send_file(docx_filename, as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+
+def generate_docx(transactionId, email):
+    company_details = ""
+    try:
+        company_details = session.get('company_details')
+    except:
+        logging.debug("Nu e CUI")
+
     try:
         transactionId = int(transactionId)
-
     except Exception as e:
         return redirect(url_for('index'))
 
@@ -96,10 +111,7 @@ def success():
     # Format the datetime object in the desired format
     current_date = parsed_time.strftime("%d/%m/%Y %H:%M")
 
-    if 'DYNO' in os.environ:  # if running on Heroku
-        with open('/app/frontend/images/dfg_logo.png', 'rb') as f:
-            image_data = f.read()
-    elif 'RENDER' in os.environ:
+    if 'RENDER' in os.environ:
         with open('/opt/render/project/src/frontend/images/dfg_logo.png', 'rb') as f:
             image_data = f.read()
     else:
@@ -109,89 +121,76 @@ def success():
     # Convert image data to base64-encoded string
     base64_image = base64.b64encode(image_data).decode('utf-8')
 
-    # Render the HTML template for the invoice and pass session storage data
-    html = render_template('invoice.html', image_data=base64_image, email=email, company_details=company_details, transactionDetails=transactionDetails, current_date=current_date)
+    with app.app_context():
+        # Render the HTML template for the invoice and pass session storage data
+        html = render_template('invoice.html', image_data=base64_image, email=email, company_details=company_details, transactionDetails=transactionDetails, current_date=current_date)
 
-    if 'DYNO' in os.environ:  # if running on Heroku
-        # Convert HTML to PDF and save to the temporary file
-        pdfkit.from_string(html, f"/app/backend/facturi/factura_{transactionId}.pdf", configuration=config)
+    # Create the Word document
+    doc = Document()
+    doc.add_heading('Factura/Invoice', 0)
 
-        send_emails(f"/app/backend/facturi/factura_{transactionId}.pdf", transactionId, email)
+    # Add company details
+    doc.add_heading('Furnizor/Seller', level=1)
+    doc.add_paragraph('DFG ACTIVE IMOBILIARE SRL')
+    doc.add_paragraph('CUI/Tax ID no: 15830118')
+    doc.add_paragraph('Adresa/Adress: MUNICIPIUL BUCUREŞTI, SECTOR 5, STR. ION CREANGĂ, NR.7, CAMERA 3, ET.6, AP.25')
+    doc.add_paragraph('Registrul comertului/Registration no: J40/13984/2003')
+
+    if company_details:
+        # Add customer details
+        doc.add_heading('Cumparator/Customer', level=1)
+        doc.add_paragraph(f'Denumire: {company_details["denumire"]}')
+        doc.add_paragraph(f'CUI/Tax ID no: {company_details["cui"]}')
+        doc.add_paragraph(f'Adresa/Adress: {company_details["adresa"]}')
+        doc.add_paragraph(f'Registrul comertului/Registration no: {company_details["nrRegCom"]}')
+        doc.add_paragraph(f'Email: {email}')
     else:
-        # Convert HTML to PDF and save to the temporary file
-        # pdfkit.from_string(html, f"facturi/factura_{transactionId}.pdf", configuration=config)
+        # Add customer details
+        doc.add_heading('Cumparator/Customer', level=1)
+        doc.add_paragraph(f'Persoana fizica')
 
-        # Create the Word document
-        doc = Document()
-        doc.add_heading('Factura/Invoice', 0)
+    # Add invoice details
+    doc.add_heading('Detalii Factura/Invoice Details', level=2)
+    doc.add_paragraph(f'Numar factura/Invoice no: #12345')
+    doc.add_paragraph(f'Data emiterii/Date of issue: {current_date}')
+    doc.add_paragraph(f'Data livrarii/Date of delivery: {current_date}')
 
-        # Add company details
-        doc.add_heading('Furnizor/Seller', level=1)
-        doc.add_paragraph('DFG ACTIVE IMOBILIARE SRL')
-        doc.add_paragraph('CUI/Tax ID no: 15830118')
-        doc.add_paragraph('Adresa/Adress: MUNICIPIUL BUCUREŞTI, SECTOR 5, STR. ION CREANGĂ, NR.7, CAMERA 3, ET.6, AP.25')
-        doc.add_paragraph('Registrul comertului/Registration no: J40/13984/2003')
+    # Add transaction table
+    table = doc.add_table(rows=1, cols=6)
+    hdr_cells = table.rows[0].cells
+    hdr_cells[0].text = 'Denumire produs\nProduct name'
+    hdr_cells[1].text = 'Pret per KWh\nPrice per KWh\n(RON/KWh)'
+    hdr_cells[2].text = 'Cantitate\nQuantity\n(KWh)'
+    hdr_cells[3].text = 'Pret fara TVA\nPrice without VAT\n(RON)'
+    hdr_cells[4].text = 'TVA\nVAT\n(%)'
+    hdr_cells[5].text = 'Pret cu TVA\nPrice with VAT\n(RON)'
 
-        if company_details:
-            # Add customer details
-            doc.add_heading('Cumparator/Customer', level=1)
-            doc.add_paragraph(f'Denumire: {company_details["denumire"]}')
-            doc.add_paragraph(f'CUI/Tax ID no: {company_details["cui"]}')
-            doc.add_paragraph(f'Adresa/Adress: {company_details["adresa"]}')
-            doc.add_paragraph(f'Registrul comertului/Registration no: {company_details["nrRegCom"]}')
-            doc.add_paragraph(f'Email: {email}')
-        else:
-            # Add customer details
-            doc.add_heading('Cumparator/Customer', level=1)
-            doc.add_paragraph(f'Email: {email}')
+    # Add a row for the transaction details
+    row_cells = table.add_row().cells
+    row_cells[0].text = 'Energie/Energy'
+    row_cells[1].text = f'{transactionDetails["kwPrice"]}'
+    quantity = transactionDetails["finalAmount"] / 100 / transactionDetails["kwPrice"]
+    price_without_vat = transactionDetails["finalAmount"] / 100 / 1.19
+    row_cells[2].text = f'{quantity:.2f}'
+    row_cells[3].text = f'{price_without_vat:.2f}'
+    row_cells[4].text = '19'
+    row_cells[5].text = f'{transactionDetails["finalAmount"] / 100:.2f}'
 
-        # Add invoice details
-        doc.add_heading('Detalii Factura/Invoice Details', level=2)
-        doc.add_paragraph(f'Numar factura/Invoice no: #12345')
-        doc.add_paragraph(f'Data emiterii/Date of issue: {current_date}')
-        doc.add_paragraph(f'Data livrarii/Date of delivery: {current_date}')
-
-        # Add transaction table
-        table = doc.add_table(rows=1, cols=6)
-        hdr_cells = table.rows[0].cells
-        hdr_cells[0].text = 'Denumire produs\nProduct name'
-        hdr_cells[1].text = 'Pret per KWh\nPrice per KWh\n(RON/KWh)'
-        hdr_cells[2].text = 'Cantitate\nQuantity\n(KWh)'
-        hdr_cells[3].text = 'Pret fara TVA\nPrice without VAT\n(RON)'
-        hdr_cells[4].text = 'TVA\nVAT\n(%)'
-        hdr_cells[5].text = 'Pret cu TVA\nPrice with VAT\n(RON)'
-
-        # Add a row for the transaction details
-        row_cells = table.add_row().cells
-        row_cells[0].text = 'Energie/Energy'
-        row_cells[1].text = f'{transactionDetails["kwPrice"]}'
-        quantity = transactionDetails["finalAmount"] / 100 / transactionDetails["kwPrice"]
-        price_without_vat = transactionDetails["finalAmount"] / 100 / 1.19
-        row_cells[2].text = f'{quantity:.2f}'
-        row_cells[3].text = f'{price_without_vat:.2f}'
-        row_cells[4].text = '19'
-        row_cells[5].text = f'{transactionDetails["finalAmount"] / 100:.2f}'
-
-        # Add footer
-        section = doc.sections[0]
-        footer = section.footer
-        footer_paragraph = footer.paragraphs[0]
-        footer_paragraph.text = "Email: solarPlannersEmail\nTelefon/Phone Number: 07xxx\nWebsite: solar.planners.ro\n\nFactura creata de Solar Planners SRL/Invoice created by Solar Planners SRL"
-        footer_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-        
-        if 'RENDER' in os.environ:
-            # Save the Word document
-            docx_filename = f"/opt/render/project/src/backend/facturi/factura_{transactionId}.docx"
-        else:
-            docx_filename = f"facturi/factura_{transactionId}.docx"
-        
-        doc.save(docx_filename)
-        send_emails(docx_filename, transactionId, email)
-
-        return render_template('success.html', email=email)
-
-        # # Send the file as a response
-        # return send_file(docx_filename, as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    # Add footer
+    section = doc.sections[0]
+    footer = section.footer
+    footer_paragraph = footer.paragraphs[0]
+    footer_paragraph.text = "Email: office@solar.planners.ro\nTelefon/Phone Number: 0726323012\nWebsite: solar.planners.ro\n\nFactura creata de Solar Planners SRL/Invoice created by Solar Planners SRL"
+    footer_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    
+    if 'RENDER' in os.environ:
+        # Save the Word document
+        docx_filename = f"/opt/render/project/src/backend/facturi/factura_{transactionId}.docx"
+    else:
+        docx_filename = f"facturi/factura_{transactionId}.docx"
+    
+    doc.save(docx_filename)
+    send_emails(docx_filename, transactionId, email)
 
 def remove_alpha_chars(s):
     """Remove non-digit characters from a string."""
@@ -226,9 +225,7 @@ def fetch_anaf_data(cui, attempts=2):
 
 # Function to save JSON data to a temporary file
 def save_json(data):
-    if 'DYNO' in os.environ:  # if running on Heroku
-        file_location = "/tmp/anaf_response.json"
-    elif 'RENDER' in os.environ:
+    if 'RENDER' in os.environ:
         file_location = "/opt/render/project/src/temp/anaf_response.json"
     else:
         file_location = "C:/Users/developer/Documents/ws-server/platform/temp/anaf_response.json"  # Define temporary file path
@@ -307,9 +304,7 @@ def send_company_details():
 
 @app.route('/get_temp_file/<path:filename>')
 def get_temp_file(filename):
-    if 'DYNO' in os.environ:  # if running on Heroku
-        file_path = "/tmp/anaf_response.json"
-    elif 'RENDER' in os.environ:
+    if 'RENDER' in os.environ:
         file_path = "/opt/render/project/src/temp/anaf_response.json"
     else:
         file_path = '../temp/anaf_response.json'
@@ -418,13 +413,7 @@ def send_emails(attachment_file, transactionId, email):
     #msg.attach(MIMEBase('text', 'plain'))
     msg.attach(MIMEText(body, 'html'))
 
-    if 'DYNO' in os.environ:  # if running on Heroku
-        # Attach the logo image
-        with open("/app/frontend/images/logo_nobg.png", 'rb') as f:
-            logo = MIMEImage(f.read(), _subtype="svg+xml")
-            logo.add_header('Content-ID', '<logo>')
-            msg.attach(logo)
-    elif 'RENDER' in os.environ:
+    if 'RENDER' in os.environ:
         # Attach the logo image
         with open("/opt/render/project/src/frontend/images/logo_nobg.png", 'rb') as f:
             logo = MIMEImage(f.read(), _subtype="svg+xml")
@@ -462,4 +451,4 @@ def send_emails(attachment_file, transactionId, email):
     
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False, threaded=False)
