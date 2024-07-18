@@ -96,13 +96,20 @@ def generate_docx(transactionId, email):
         return redirect(url_for('index'))
 
     db = client['EV_Stations']
-    collection = db['transactions']
+    collectionTransactions = db['transactions']
 
-    transactionDetails = collection.find_one({"TransactionID": transactionId})
+    transactionDetails = collectionTransactions.find_one({"TransactionID": transactionId})
     print(transactionDetails)
 
     if transactionDetails == None:
         return redirect(url_for('index'))
+    
+    collectionStations = db['stations']
+    station = collectionStations.find_one({"sn": transactionDetails["sn"]})
+    series = station["series"]
+    increment = station["increment"]
+    increment = increment + 1
+    collectionStations.update_one({'sn': transactionDetails["sn"]}, {'$set': {'increment': increment}})
     
     # Get the current date
     formatted_time = transactionDetails["StopTime"]
@@ -123,7 +130,7 @@ def generate_docx(transactionId, email):
 
     with app.app_context():
         # Render the HTML template for the invoice and pass session storage data
-        html = render_template('invoice.html', image_data=base64_image, email=email, company_details=company_details, transactionDetails=transactionDetails, current_date=current_date)
+        html = render_template('invoice.html', series=series, increment=increment, image_data=base64_image, email=email, company_details=company_details, transactionDetails=transactionDetails, current_date=current_date)
 
     # Create the Word document
     doc = Document()
@@ -151,7 +158,7 @@ def generate_docx(transactionId, email):
 
     # Add invoice details
     doc.add_heading('Detalii Factura/Invoice Details', level=2)
-    doc.add_paragraph(f'Numar factura/Invoice no: #12345')
+    doc.add_paragraph(f'Numar factura/Invoice no: {series}-{increment}')
     doc.add_paragraph(f'Data emiterii/Date of issue: {current_date}')
     doc.add_paragraph(f'Data livrarii/Date of delivery: {current_date}')
 
@@ -185,9 +192,9 @@ def generate_docx(transactionId, email):
     
     if 'RENDER' in os.environ:
         # Save the Word document
-        docx_filename = f"/opt/render/project/src/backend/facturi/factura_{transactionId}.docx"
+        docx_filename = f"/opt/render/project/src/backend/facturi/factura_{series}_{increment}.docx"
     else:
-        docx_filename = f"facturi/factura_{transactionId}.docx"
+        docx_filename = f"facturi/factura_{series}_{increment}.docx"
     
     doc.save(docx_filename)
     send_emails(docx_filename, transactionId, email)
