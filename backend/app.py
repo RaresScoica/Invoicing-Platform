@@ -52,7 +52,7 @@ def watch_collection():
                 new_document = change['fullDocument']
                 print("New document inserted: ", new_document)
                 transactionId = new_document.get("TransactionID")
-                email = "rares.goiceanu@arsek.ro"
+                email = "office@arsek.ro"
                 generate_docx(transactionId, email)
 
 # Start the Change Stream watcher in a separate thread
