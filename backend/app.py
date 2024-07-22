@@ -332,7 +332,7 @@ def send_emails(attachment_file, transactionId, email):
     smtp_username = "rares.goiceanu@arsek.ro"
     smtp_password = "jdm,Bass2000"
     
-    sender_email = "rares.goiceanu@arsek.ro"
+    sender_email = "rares.goiceanu@arsek.ro"ff
 
     #Electric planners:
     #"mihai.sandu@electricplanners.ro" , "romulus@dfg.ro" , "mariust01@yahoo.com"
