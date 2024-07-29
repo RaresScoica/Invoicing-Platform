@@ -18,8 +18,8 @@ from email.mime.image import MIMEImage
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
-from flask import Flask, redirect, render_template, request, jsonify, send_from_directory, session, url_for
-from pymongo import MongoClient
+from flask import Flask, redirect, render_template, request, jsonify, send_file, send_from_directory, session, url_for
+from pymongo import MongoClient, UpdateOne
 from pymongo.server_api import ServerApi
 
 load_dotenv()
@@ -58,6 +58,43 @@ def watch_collection():
 # Start the Change Stream watcher in a separate thread
 threading.Thread(target=watch_collection, daemon=True).start()
 
+def changeConfig():
+    db = client['EV_Stations']
+    collection = db['transactions']
+
+    # Filter for documents to update
+    filter = { 'sn': 'C6E20CCC23CATETRVT' }
+
+    try:
+        print("Attempting to find documents...")
+        documents = collection.find(filter)
+        documents_list = list(documents)
+        print(f"Documents found: {documents_list}")
+        if not documents_list:
+            print("No documents found matching the filter.")
+        else:
+            print(f"Found {len(documents_list)} document(s) matching the filter.")
+    except Exception as e:
+        print(f"Error finding documents: {e}")
+        raise
+
+    # Initialize the counter
+    k = 1
+
+    # Prepare bulk operations
+    bulk_updates = []
+    for doc in documents:
+        update = { '$set': { 'nr': k } }
+        bulk_updates.append(UpdateOne({ '_id': doc['_id'] }, update))
+        k += 1
+
+    # Execute the bulk operations
+    if bulk_updates:
+        result = collection.bulk_write(bulk_updates)
+        print(f'Matched {result.matched_count} document(s) and modified {result.modified_count} document(s)')
+    else:
+        print('No documents found matching the filter.')
+
 @app.route('/')
 def index():
     session.clear()
@@ -80,9 +117,6 @@ def success():
 
     return render_template('success.html', email=email)
 
-    # # Send the file as a response
-    # return send_file(docx_filename, as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-
 def generate_docx(transactionId, email):
     company_details = ""
     try:
@@ -101,103 +135,109 @@ def generate_docx(transactionId, email):
     transactionDetails = collectionTransactions.find_one({"TransactionID": transactionId})
     print(transactionDetails)
 
-    if transactionDetails == None:
-        return redirect(url_for('index'))
-    
-    collectionStations = db['stations']
-    station = collectionStations.find_one({"sn": transactionDetails["sn"]})
-    series = station["series"]
-    increment = station["increment"]
-    increment = increment + 1
-    collectionStations.update_one({'sn': transactionDetails["sn"]}, {'$set': {'increment': increment}})
-    
-    # Get the current date
-    formatted_time = transactionDetails["StopTime"]
-    # Parse the input string into a datetime object
-    parsed_time = datetime.strptime(formatted_time, "%Y-%m-%dT%H:%M:%SZ")
-    # Format the datetime object in the desired format
-    current_date = parsed_time.strftime("%d/%m/%Y %H:%M")
+    if transactionDetails['finalAmount'] != 0:
+        if transactionDetails == None:
+            return redirect(url_for('index'))
+        
+        nr = transactionDetails['nr']
+        collectionStations = db['stations']
+        station = collectionStations.find_one({"sn": transactionDetails["sn"]})
+        series = station["series"]
+        
+        # Get the current date
+        formatted_time = transactionDetails["StopTime"]
+        # Parse the input string into a datetime object
+        parsed_time = datetime.strptime(formatted_time, "%Y-%m-%dT%H:%M:%SZ")
+        # Format the datetime object in the desired format
+        current_date = parsed_time.strftime("%d/%m/%Y %H:%M")
 
-    if 'RENDER' in os.environ:
-        with open('/opt/render/project/src/frontend/images/dfg_logo.png', 'rb') as f:
-            image_data = f.read()
+        if 'RENDER' in os.environ:
+            with open('/opt/render/project/src/frontend/images/dfg_logo.png', 'rb') as f:
+                image_data = f.read()
+        else:
+            with open('../frontend/images/dfg_logo.png', 'rb') as f:
+                image_data = f.read()
+
+        # Convert image data to base64-encoded string
+        base64_image = base64.b64encode(image_data).decode('utf-8')
+
+        with app.app_context():
+            # Render the HTML template for the invoice and pass session storage data
+            html = render_template('invoice.html', series=series, nr=nr, image_data=base64_image, email=email, company_details=company_details, transactionDetails=transactionDetails, current_date=current_date)
+
+        # Create the Word document
+        doc = Document()
+        doc.add_heading('Factura/Invoice', 0)
+
+        # Add company details
+        doc.add_heading('Furnizor/Seller', level=1)
+        doc.add_paragraph('DFG ACTIVE IMOBILIARE SRL')
+        doc.add_paragraph('CUI/Tax ID no: 15830118')
+        doc.add_paragraph('Adresa/Adress: MUNICIPIUL BUCUREŞTI, SECTOR 5, STR. ION CREANGĂ, NR.7, CAMERA 3, ET.6, AP.25')
+        doc.add_paragraph('Registrul comertului/Registration no: J40/13984/2003')
+
+        if company_details:
+            # Add customer details
+            doc.add_heading('Cumparator/Customer', level=1)
+            doc.add_paragraph(f'Denumire: {company_details["denumire"]}')
+            doc.add_paragraph(f'CUI/Tax ID no: {company_details["cui"]}')
+            doc.add_paragraph(f'Adresa/Adress: {company_details["adresa"]}')
+            doc.add_paragraph(f'Registrul comertului/Registration no: {company_details["nrRegCom"]}')
+            doc.add_paragraph(f'Email: {email}')
+        else:
+            # Add customer details
+            doc.add_heading('Cumparator/Customer', level=1)
+            doc.add_paragraph(f'Persoana fizica')
+
+        # Add invoice details
+        doc.add_heading('Detalii Factura/Invoice Details', level=2)
+        doc.add_paragraph(f'Numar factura/Invoice no: {series}-{nr}')
+        doc.add_paragraph(f'Data emiterii/Date of issue: {current_date}')
+        doc.add_paragraph(f'Data livrarii/Date of delivery: {current_date}')
+
+        # Add transaction table
+        table = doc.add_table(rows=1, cols=7)
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'Denumire produs\nProduct name'
+        hdr_cells[1].text = 'Pret per KWh\nPrice per KWh\n(RON/KWh)'
+        hdr_cells[2].text = 'Cantitate\nQuantity\n(KWh)'
+        hdr_cells[3].text = 'Pret fara TVA\nPrice without VAT\n(RON)'
+        hdr_cells[4].text = 'Valoare TVA\nVAT Value(RON)'
+        hdr_cells[5].text = 'TVA\nVAT\n(%)'
+        hdr_cells[6].text = 'Pret cu TVA\nPrice with VAT\n(RON)'
+
+        # Add a row for the transaction details
+        row_cells = table.add_row().cells
+        row_cells[0].text = 'Energie/Energy'
+        row_cells[1].text = f'{transactionDetails["kwPrice"] / 1.19:.2f}'
+        total = transactionDetails["finalAmount"] / 100
+        formatted_total = round(total, 2)
+        quantity = (formatted_total / 1.19) / (transactionDetails["kwPrice"] / 1.19)
+        price_without_vat = formatted_total / 1.19
+        row_cells[2].text = f'{quantity:.2f}'
+        row_cells[3].text = f'{price_without_vat:.2f}'
+        row_cells[4] .text = f'{formatted_total - price_without_vat:.2f}'
+        row_cells[5].text = '19'
+        row_cells[6].text = f'{formatted_total}'
+
+        # Add footer
+        section = doc.sections[0]
+        footer = section.footer
+        footer_paragraph = footer.paragraphs[0]
+        footer_paragraph.text = "Email: office@solar.planners.ro\nTelefon/Phone Number: 0726323012\nWebsite: solar.planners.ro\n\nFactura creata de Solar Planners SRL/Invoice created by Solar Planners SRL"
+        footer_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        
+        if 'RENDER' in os.environ:
+            # Save the Word document
+            docx_filename = f"/opt/render/project/src/backend/facturi/factura_{series}_{nr}.docx"
+        else:
+            docx_filename = f"facturi/factura_{series}_{nr}.docx"
+        
+        doc.save(docx_filename)
+        send_emails(docx_filename, transactionId, email)
+
     else:
-        with open('../frontend/images/dfg_logo.png', 'rb') as f:
-            image_data = f.read()
-
-    # Convert image data to base64-encoded string
-    base64_image = base64.b64encode(image_data).decode('utf-8')
-
-    with app.app_context():
-        # Render the HTML template for the invoice and pass session storage data
-        html = render_template('invoice.html', series=series, increment=increment, image_data=base64_image, email=email, company_details=company_details, transactionDetails=transactionDetails, current_date=current_date)
-
-    # Create the Word document
-    doc = Document()
-    doc.add_heading('Factura/Invoice', 0)
-
-    # Add company details
-    doc.add_heading('Furnizor/Seller', level=1)
-    doc.add_paragraph('DFG ACTIVE IMOBILIARE SRL')
-    doc.add_paragraph('CUI/Tax ID no: 15830118')
-    doc.add_paragraph('Adresa/Adress: MUNICIPIUL BUCUREŞTI, SECTOR 5, STR. ION CREANGĂ, NR.7, CAMERA 3, ET.6, AP.25')
-    doc.add_paragraph('Registrul comertului/Registration no: J40/13984/2003')
-
-    if company_details:
-        # Add customer details
-        doc.add_heading('Cumparator/Customer', level=1)
-        doc.add_paragraph(f'Denumire: {company_details["denumire"]}')
-        doc.add_paragraph(f'CUI/Tax ID no: {company_details["cui"]}')
-        doc.add_paragraph(f'Adresa/Adress: {company_details["adresa"]}')
-        doc.add_paragraph(f'Registrul comertului/Registration no: {company_details["nrRegCom"]}')
-        doc.add_paragraph(f'Email: {email}')
-    else:
-        # Add customer details
-        doc.add_heading('Cumparator/Customer', level=1)
-        doc.add_paragraph(f'Persoana fizica')
-
-    # Add invoice details
-    doc.add_heading('Detalii Factura/Invoice Details', level=2)
-    doc.add_paragraph(f'Numar factura/Invoice no: {series}-{increment}')
-    doc.add_paragraph(f'Data emiterii/Date of issue: {current_date}')
-    doc.add_paragraph(f'Data livrarii/Date of delivery: {current_date}')
-
-    # Add transaction table
-    table = doc.add_table(rows=1, cols=6)
-    hdr_cells = table.rows[0].cells
-    hdr_cells[0].text = 'Denumire produs\nProduct name'
-    hdr_cells[1].text = 'Pret per KWh\nPrice per KWh\n(RON/KWh)'
-    hdr_cells[2].text = 'Cantitate\nQuantity\n(KWh)'
-    hdr_cells[3].text = 'Pret fara TVA\nPrice without VAT\n(RON)'
-    hdr_cells[4].text = 'TVA\nVAT\n(%)'
-    hdr_cells[5].text = 'Pret cu TVA\nPrice with VAT\n(RON)'
-
-    # Add a row for the transaction details
-    row_cells = table.add_row().cells
-    row_cells[0].text = 'Energie/Energy'
-    row_cells[1].text = f'{transactionDetails["kwPrice"]}'
-    quantity = transactionDetails["finalAmount"] / 100 / transactionDetails["kwPrice"]
-    price_without_vat = transactionDetails["finalAmount"] / 100 / 1.19
-    row_cells[2].text = f'{quantity:.2f}'
-    row_cells[3].text = f'{price_without_vat:.2f}'
-    row_cells[4].text = '19'
-    row_cells[5].text = f'{transactionDetails["finalAmount"] / 100:.2f}'
-
-    # Add footer
-    section = doc.sections[0]
-    footer = section.footer
-    footer_paragraph = footer.paragraphs[0]
-    footer_paragraph.text = "Email: office@solar.planners.ro\nTelefon/Phone Number: 0726323012\nWebsite: solar.planners.ro\n\nFactura creata de Solar Planners SRL/Invoice created by Solar Planners SRL"
-    footer_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-    
-    if 'RENDER' in os.environ:
-        # Save the Word document
-        docx_filename = f"/opt/render/project/src/backend/facturi/factura_{series}_{increment}.docx"
-    else:
-        docx_filename = f"facturi/factura_{series}_{increment}.docx"
-    
-    doc.save(docx_filename)
-    send_emails(docx_filename, transactionId, email)
+        print("This is a remote transaction so it doesn't require an invoice!")
 
 def remove_alpha_chars(s):
     """Remove non-digit characters from a string."""
@@ -256,19 +296,35 @@ def send_email_and_cui():
     email = data.get('email')
     transactionId = data.get('transactionId')
 
-    # session['email'] = email
-    # session['transactionId'] = transactionId
-
     db = client['EV_Stations']
     collection = db['current_transaction']
 
     # Combine the $set updates into a single dictionary
-    update = {'$set': {'email': email, 'transactionId': transactionId}}
+    update = {'$set': {'email': email, 'transactionId': transactionId, 'cui': cui}}
 
     # Update the document
     collection.update_one({"ID": "current"}, update, upsert=True)
     
     if cui:
+        collectionTransactions = db['transactions']
+        transactionId = int(transactionId)
+
+        # Query to check if 'cui' field exists in the document
+        query = {'TransactionID': transactionId, 'cui': {'$exists': False}}
+
+        # Check if a document with the given TransactionID exists and 'cui' field is not present
+        document = collectionTransactions.find_one(query)
+
+        if document:
+            # Perform the update if the 'cui' field does not exist
+            result = collectionTransactions.update_one({'TransactionID': transactionId}, {'$set': {'cui': cui}})
+            if result.modified_count > 0:
+                print(f"Document updated, 'cui' field set to {cui}.")
+            else:
+                print("Document found but no changes were made.")
+        else:
+            print("No document found or 'cui' field already exists.")
+
         cui_variable = cui
         anaf_response = fetch_anaf_data(cui_variable)
         if anaf_response:
@@ -332,7 +388,7 @@ def send_emails(attachment_file, transactionId, email):
     smtp_username = "rares.goiceanu@arsek.ro"
     smtp_password = "jdm,Bass2000"
     
-    sender_email = "rares.goiceanu@arsek.ro"ff
+    sender_email = "rares.goiceanu@arsek.ro"
 
     #Electric planners:
     #"mihai.sandu@electricplanners.ro" , "romulus@dfg.ro" , "mariust01@yahoo.com"
@@ -457,5 +513,6 @@ def send_emails(attachment_file, transactionId, email):
     server.quit()
     
 if __name__ == '__main__':
+    # changeConfig()
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False, threaded=False)

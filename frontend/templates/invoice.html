@@ -90,7 +90,7 @@
         </div>
         <div class="invoice-details">
             <h3>Detalii Factura/Invoice Details</h3>
-            <p><label>Numar factura/Invoice no: </label>{{series}}-{{increment}}</p>
+            <p><label>Numar factura/Invoice no: </label>{{series}}-{{nr}}</p>
             <p><label>Data emiterii/Date of issue: </label>{{ current_date }}</p>
             <p><label>Data livrarii/Date of delivery: </label>{{ current_date }}</p>
         </div>
@@ -107,12 +107,14 @@
             </thead>
             <tbody>
                 <tr>
+                    {% set total = (transactionDetails.finalAmount / 100) | round(2) %}
                     <td>Energie/Energy</td>
-                    <td>{{ transactionDetails.kwPrice }}</td>
-                    <td>{{ "%.2f"|format(transactionDetails.finalAmount/100/transactionDetails.finalAmount) }}</td>
-                    <td>{{ "%.2f"|format(transactionDetails.finalAmount/100/1.19) }}</td>
+                    <td>{{ "%.2f"|format(transactionDetails.kwPrice / 1.19) }}</td>
+                    <td>{{ "%.2f"|format((total / 1.19) / (transactionDetails.kwPrice / 1.19)) }}</td>
+                    <td>{{ "%.2f"|format(total / 1.19) }}</td>
+                    <td>{{ "%.2f"|format(total - (total / 1.19)) }}</td>
                     <td>19</td>
-                    <td>{{ transactionDetails.finalAmount/100 }}</td>
+                    <td>{{ "%.2f"|format(total) }}</td>
                 </tr>
             </tbody>
         </table>
