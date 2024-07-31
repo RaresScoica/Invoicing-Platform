@@ -28,8 +28,11 @@ logging.basicConfig(level=logging.DEBUG)
 
 frontend_folder = os.path.join(os.path.dirname(__file__), '../frontend')
 app = Flask(__name__, template_folder=os.path.join(frontend_folder, 'templates'))
+
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 uri = os.getenv('MONGO_URI')
+MAIL_USER = os.getenv('MAIL_USER')
+MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
 
 # Create a new client and connect to the server
 client = MongoClient(uri, server_api=ServerApi('1'), tlsCAFile=certifi.where())
@@ -52,7 +55,7 @@ def watch_collection():
                 new_document = change['fullDocument']
                 print("New document inserted: ", new_document)
                 transactionId = new_document.get("TransactionID")
-                email = "office@arsek.ro"
+                email = "invoice@arsek.ro"
                 generate_docx(transactionId, email)
 
 # Start the Change Stream watcher in a separate thread
@@ -234,7 +237,7 @@ def generate_docx(transactionId, email):
             docx_filename = f"facturi/factura_{series}_{nr}.docx"
         
         doc.save(docx_filename)
-        send_emails(docx_filename, transactionId, email)
+        send_emails(docx_filename, transactionId, email, series, nr)
 
     else:
         print("This is a remote transaction so it doesn't require an invoice!")
@@ -383,19 +386,20 @@ def get_temp_file(filename):
         print("CUI not found")
         return redirect(url_for('index'))
     
-def send_emails(attachment_file, transactionId, email):
+def send_emails(attachment_file, transactionId, email, series, nr):
     # Get SMTP credentials from environmental variables
-    smtp_username = "rares.goiceanu@arsek.ro"
-    smtp_password = "jdm,Bass2000"
+    #
+    # MODIFICAT AICI - DE DAT PUSH - 29/07/2024 15:45
+    #
+    smtp_username = MAIL_USER
+    smtp_password = MAIL_PASSWORD
     
-    sender_email = "rares.goiceanu@arsek.ro"
+    sender_email = "invoice@arsek.ro"
 
-    #Electric planners:
-    #"mihai.sandu@electricplanners.ro" , "romulus@dfg.ro" , "mariust01@yahoo.com"
-    #"stefan.diaconu@arsek.ro"
-    receiver_emails = [email, "rares.goiceanu@arsek.ro"]
+    #"mihai.sandu@electricplanners.ro" , "romulus@dfg.ro"
+    receiver_emails = [email, "rares.goiceanu@arsek.ro", "invoice@arsek.ro"]
     receiver_emails_str = ', '.join(receiver_emails)
-    subject = "Factura {}".format(transactionId)
+    subject = "Factura {}_{}".format(series, nr)
     
     # HTML content for the email body
     body = """
