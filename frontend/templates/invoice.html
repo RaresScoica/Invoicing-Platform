@@ -107,14 +107,18 @@
             </thead>
             <tbody>
                 <tr>
-                    {% set total = (transactionDetails.finalAmount / 100) | round(2) %}
+                    {% set unit_price = (transactionDetails.kwPrice / 1.19) | round(2) %}
+                    {% set pre_tax_amount = (transactionDetails.preTaxAmount / 100) | round(2) %}
+                    {% set quantity = (pre_tax_amount / unit_price) | round(2) %}
+                    {% set vat_value = (pre_tax_amount * 0.19) | round(2) %}
+                    {% set total_value = (pre_tax_amount + vat_value) | round(2) %}
                     <td>Energie/Energy</td>
-                    <td>{{ "%.2f"|format(transactionDetails.kwPrice / 1.19) }}</td>
-                    <td>{{ "%.2f"|format((total / 1.19) / (transactionDetails.kwPrice / 1.19)) }}</td>
-                    <td>{{ "%.2f"|format(total / 1.19) }}</td>
-                    <td>{{ "%.2f"|format(total - (total / 1.19)) }}</td>
+                    <td>{{ unit_price }}</td>
+                    <td>{{ quantity }}</td>
+                    <td>{{ pre_tax_amount }}</td>
+                    <td>{{ vat_value }}</td>
                     <td>19</td>
-                    <td>{{ "%.2f"|format(total) }}</td>
+                    <td>{{ total_value }}</td>
                 </tr>
             </tbody>
         </table>

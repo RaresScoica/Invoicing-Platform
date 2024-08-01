@@ -221,18 +221,19 @@ def generate_docx(transactionId, email):
         hdr_cells[6].text = 'Pret cu TVA\nPrice with VAT\n(RON)'
 
         # Add a row for the transaction details
+        unit_price = round(transactionDetails["kwPrice"] / 1.19, 2)
+        pre_tax_amount = round(transactionDetails["preTaxAmount"] / 100, 2)
+        quantity = round(pre_tax_amount / unit_price, 2)
+        vat_value = round(pre_tax_amount * 0.19, 2)
+        total_value = round(pre_tax_amount + vat_value, 2)
         row_cells = table.add_row().cells
         row_cells[0].text = 'Energie/Energy'
-        row_cells[1].text = f'{transactionDetails["kwPrice"] / 1.19:.2f}'
-        total = transactionDetails["finalAmount"] / 100
-        formatted_total = round(total, 2)
-        quantity = (formatted_total / 1.19) / (transactionDetails["kwPrice"] / 1.19)
-        price_without_vat = formatted_total / 1.19
-        row_cells[2].text = f'{quantity:.2f}'
-        row_cells[3].text = f'{price_without_vat:.2f}'
-        row_cells[4] .text = f'{formatted_total - price_without_vat:.2f}'
+        row_cells[1].text = f'{unit_price}'
+        row_cells[2].text = f'{quantity}'
+        row_cells[3].text = f'{pre_tax_amount}'
+        row_cells[4] .text = f'{vat_value}'
         row_cells[5].text = '19'
-        row_cells[6].text = f'{formatted_total}'
+        row_cells[6].text = f'{total_value}'
 
         # Add footer
         section = doc.sections[0]
