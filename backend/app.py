@@ -29,6 +29,12 @@ logging.basicConfig(level=logging.DEBUG)
 frontend_folder = os.path.join(os.path.dirname(__file__), '../frontend')
 app = Flask(__name__, template_folder=os.path.join(frontend_folder, 'templates'))
 
+# if 'RENDER' in os.environ:
+#     app.config['SECRET_KEY'] = process.getenv('SECRET_KEY')
+#     uri = os.getenv('MONGO_URI')
+#     MAIL_USER = os.getenv('MAIL_USER')
+#     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
+# else:
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 uri = os.getenv('MONGO_URI')
 MAIL_USER = os.getenv('MAIL_USER')
