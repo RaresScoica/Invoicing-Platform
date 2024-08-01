@@ -319,14 +319,19 @@ def send_email_and_cui():
         document = collectionTransactions.find_one(query)
 
         if document:
-            # Perform the update if the 'cui' field does not exist
-            result = collectionTransactions.update_one({'TransactionID': transactionId}, {'$set': {'cui': cui}})
-            if result.modified_count > 0:
-                print(f"Document updated, 'cui' field set to {cui}.")
+            if 'cui' in document:
+                # 'cui' field already exists, return index.html
+                print("CUI field already exists.")
+                return render_template('index.html')
             else:
-                print("Document found but no changes were made.")
+                # Perform the update if the 'cui' field does not exist
+                result = collectionTransactions.update_one({'TransactionID': transactionId}, {'$set': {'cui': cui}})
+                if result.modified_count > 0:
+                    print(f"Document updated, 'cui' field set to {cui}.")
+                else:
+                    print("Document found but no changes were made.")
         else:
-            print("No document found or 'cui' field already exists.")
+            print("No document found with the given TransactionID.")
 
         cui_variable = cui
         anaf_response = fetch_anaf_data(cui_variable)
@@ -388,9 +393,6 @@ def get_temp_file(filename):
     
 def send_emails(attachment_file, transactionId, email, series, nr):
     # Get SMTP credentials from environmental variables
-    #
-    # MODIFICAT AICI - DE DAT PUSH - 29/07/2024 15:45
-    #
     smtp_username = MAIL_USER
     smtp_password = MAIL_PASSWORD
     
