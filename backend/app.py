@@ -174,6 +174,7 @@ def generate_docx(transactionId, email):
             # Render the HTML template for the invoice and pass session storage data
             html = render_template('invoice.html', series=series, nr=nr, image_data=base64_image, email=email, company_details=company_details, transactionDetails=transactionDetails, current_date=current_date)
 
+#test comment
         # Create the Word document
         doc = Document()
         doc.add_heading('Factura/Invoice', 0)
