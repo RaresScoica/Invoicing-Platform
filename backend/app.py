@@ -109,6 +109,11 @@ def index():
     session.clear()
     return render_template('index.html')
 
+@app.route('/insuccess')
+def insuccess():
+    session.clear()
+    return render_template('insuccess.html')
+
 @app.route('/<int:transactionId>')
 def transaction(transactionId):
     return render_template('index.html', transactionId=transactionId)
@@ -174,7 +179,6 @@ def generate_docx(transactionId, email):
             # Render the HTML template for the invoice and pass session storage data
             html = render_template('invoice.html', series=series, nr=nr, image_data=base64_image, email=email, company_details=company_details, transactionDetails=transactionDetails, current_date=current_date)
 
-#test comment
         # Create the Word document
         doc = Document()
         doc.add_heading('Factura/Invoice', 0)
@@ -292,9 +296,7 @@ def save_json(data):
 
 @app.route('/send_email_and_cui', methods=['POST'])
 def send_email_and_cui():
-    if 'DYNO' in os.environ:  # if running on Heroku
-        file_path = "/tmp/anaf_response.json"
-    elif 'RENDER' in os.environ:
+    if 'RENDER' in os.environ:
         file_path = "/opt/render/project/src/temp/anaf_response.json"
     else:
         file_path = '../temp/anaf_response.json'
@@ -339,6 +341,7 @@ def send_email_and_cui():
                     print("Document found but no changes were made.")
         else:
             print("No document found with the given TransactionID.")
+            return jsonify({'message': 'CUI not good'}), 400
 
         cui_variable = cui
         anaf_response = fetch_anaf_data(cui_variable)
@@ -388,9 +391,7 @@ def get_temp_file(filename):
         file_path = '../temp/anaf_response.json'
     if os.path.exists(file_path):
         # Serve the temporary file to the client
-        if 'DYNO' in os.environ:  # if running on Heroku
-            return send_from_directory('/tmp', filename)
-        elif 'RENDER' in os.environ:
+        if 'RENDER' in os.environ:
             return send_from_directory('/opt/render/project/src/temp', filename)
         else:
             return send_from_directory('C:/Users/developer/Documents/ws-server/platform/temp', filename)

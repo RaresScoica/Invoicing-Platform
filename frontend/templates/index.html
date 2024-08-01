@@ -184,10 +184,10 @@
             .then(response => {
                 if (response.ok) {
                     console.log('Data sent successfully');
-
                     fetchJSONFile('/get_temp_file/anaf_response.json', email);
                 } else {
                     console.error('Failed to send data');
+                    window.location.href = 'insuccess'
                 }
             })
             .catch(error => {
