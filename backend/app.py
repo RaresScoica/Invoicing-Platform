@@ -318,35 +318,36 @@ def send_email_and_cui():
     collection.update_one({"ID": "current"}, update, upsert=True)
     
     if cui:
-        collectionTransactions = db['transactions']
-        transactionId = int(transactionId)
-
-        # Query to check if 'cui' field exists in the document
-        query = {'TransactionID': transactionId, 'cui': {'$exists': False}}
-
-        # Check if a document with the given TransactionID exists and 'cui' field is not present
-        document = collectionTransactions.find_one(query)
-
-        if document:
-            if 'cui' in document:
-                # 'cui' field already exists, return index.html
-                print("CUI field already exists.")
-                return render_template('index.html')
-            else:
-                # Perform the update if the 'cui' field does not exist
-                result = collectionTransactions.update_one({'TransactionID': transactionId}, {'$set': {'cui': cui}})
-                if result.modified_count > 0:
-                    print(f"Document updated, 'cui' field set to {cui}.")
-                else:
-                    print("Document found but no changes were made.")
-        else:
-            print("No document found with the given TransactionID.")
-            return jsonify({'message': 'CUI not good'}), 400
-
         cui_variable = cui
         anaf_response = fetch_anaf_data(cui_variable)
+
         if anaf_response:
             file_location = save_json(anaf_response)
+            collectionTransactions = db['transactions']
+            transactionId = int(transactionId)
+
+            # Query to check if 'cui' field exists in the document
+            query = {'TransactionID': transactionId, 'cui': {'$exists': False}}
+
+            # Check if a document with the given TransactionID exists and 'cui' field is not present
+            document = collectionTransactions.find_one(query)
+
+            if document:
+                if 'cui' in document:
+                    # 'cui' field already exists, return index.html
+                    print("CUI field already exists.")
+                    return render_template('index.html')
+                else:
+                    # Perform the update if the 'cui' field does not exist
+                    result = collectionTransactions.update_one({'TransactionID': transactionId}, {'$set': {'cui': cui}})
+                    if result.modified_count > 0:
+                        print(f"Document updated, 'cui' field set to {cui}.")
+                    else:
+                        print("Document found but no changes were made.")
+            else:
+                print("No document found with the given TransactionID.")
+                return jsonify({'message': 'CUI not good'}), 400
+            
             print(f"Data saved to {file_location}")
             return jsonify({'file_location': file_location})
         else:
