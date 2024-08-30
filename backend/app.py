@@ -435,7 +435,7 @@ def send_emails(attachment_file, transactionId, email, series, nr):
                     text-decoration: none;
                 }}
                 .logo img {{
-                    max-width: 300px;
+                    max-width: 20%;
                     pointer-events: none;
                     -webkit-user-select: none;
                     -moz-user-select: none;
@@ -466,7 +466,7 @@ def send_emails(attachment_file, transactionId, email, series, nr):
             <div class="container">
                 <div class="logo">
                     <a href="https://arsek.ro" target="_self">
-                        <img src="cid:logo" alt="Arsek Logo">
+                        
                     </a>
                 </div>
                 <div class="content">
@@ -482,6 +482,8 @@ def send_emails(attachment_file, transactionId, email, series, nr):
     </html>
     """.format(transactionId)
     
+    # image <img src="cid:logo" alt="Arsek Logo">
+
     # Create message container
     msg = MIMEMultipart()
     msg['From'] = sender_email
